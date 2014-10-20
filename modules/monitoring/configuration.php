@@ -134,6 +134,10 @@ $section->add($this->translate('Alert Summary'), array(
    'url'    => 'monitoring/alertsummary/index'
 ));
 
+$section->add($this->translate('Alert Histogram'), array(
+    'url'    => 'monitoring/alerthistogram/index'
+));
+
 /*
  * System Section
  */
