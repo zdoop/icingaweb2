@@ -109,8 +109,6 @@ class Monitoring_AlerthistogramController extends Controller
                 }
             }
 
-            $this->view->chart = $this->createServiceHistogram($data);
-
         } elseif ($type === 'host') {
 
             $records = $this->getHostRecords($interval, $host);
@@ -144,9 +142,9 @@ class Monitoring_AlerthistogramController extends Controller
                         break;
                 }
             }
-
-            $this->view->chart = $this->createHostHistogram($data);
         }
+
+        $this->view->chart = $this->createHistogram($type, $data);
 
         return $this;
     }
@@ -199,7 +197,7 @@ class Monitoring_AlerthistogramController extends Controller
         return $query->getQuery()->fetchAll();
     }
 
-    private function createServiceHistogram($data)
+    private function createHistogram($type, $data)
     {
         $gridChart = new HistogramGridChart();
 
@@ -208,34 +206,14 @@ class Monitoring_AlerthistogramController extends Controller
             ->setXAxis(new StaticAxis())
             ->setAxisMin(null, 0);
 
-        foreach (static::$colors['service'] as $status => $color) {
+        foreach (static::$colors[$type] as $status => $color) {
             $gridChart->drawLines(array(
-                'label'         => strtoupper($status),
-                'color'         => $color,
-                'data'          =>  $data[$status],
-                'showPoints'    => true
-            ));
-        }
-
-        return $gridChart;
-    }
-
-    private function createHostHistogram($data)
-    {
-        $gridChart = new HistogramGridChart();
-
-        $gridChart->alignTopLeft();
-        $gridChart->setAxisLabel('Date', 'Events')
-            ->setXAxis(new StaticAxis())
-            ->setAxisMin(null, 0);
-
-        foreach (static::$colors['host'] as $status => $color) {
-            $gridChart->drawLines(array(
-                'label'         => (($status === 'up') ? 'Recovery (Up)' : ucfirst($status)),
+                'label'         => static::$labels[$type][$status],
                 'color'         => $color,
                 'data'          => $data[$status],
                 'showPoints'    => true
             ));
+        }
 
         return $gridChart;
     }
