@@ -25,6 +25,20 @@ class Monitoring_AlerthistogramController extends Controller
         )
     );
 
+    protected static $labels = array(
+        'host'      => array(
+            'up'            => 'Recovery (Up)',
+            'down'          => 'Down',
+            'unreachable'   => 'Unreachable'
+        ),
+        'service'   => array(
+            'ok'        => 'OK',
+            'warning'   => 'WARNING',
+            'critical'  => 'CRITICAL',
+            'unknown'   => 'UNKNOWN'
+        )
+    );
+
     protected $url;
 
     public function init()
