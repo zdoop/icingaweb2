@@ -11,6 +11,20 @@ use Icinga\Module\Monitoring\Chart\HistogramGridChart;
 
 class Monitoring_AlerthistogramController extends Controller
 {
+    protected static $colors = array(
+        'host'      => array(
+            'up'            => '#4b7',
+            'down'          => '#f56',
+            'unreachable'   => '#a4f'
+        ),
+        'service'   => array(
+            'ok'        => '#4b7',
+            'warning'   => '#fa4',
+            'critical'  => '#f56',
+            'unknown'   => '#a4f'
+        )
+    );
+
     protected $url;
 
     public function init()
