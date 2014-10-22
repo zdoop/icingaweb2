@@ -194,41 +194,14 @@ class Monitoring_AlerthistogramController extends Controller
             ->setXAxis(new StaticAxis())
             ->setAxisMin(null, 0);
 
-        $gridChart->drawLines(
-            array(
-                'label' => 'OK',
-                'color' => '#4b7',
-                'data'  =>  $data['ok'],
-                'showPoints' => true
-            )
-        );
-
-        $gridChart->drawLines(
-            array(
-                'label' => 'WARNING',
-                'color' => '#fa4',
-                'data'  =>  $data['warning'],
-                'showPoints' => true
-            )
-        );
-
-        $gridChart->drawLines(
-            array(
-                'label' => 'CRITICAL',
-                'color' => '#f56',
-                'data'  =>  $data['critical'],
-                'showPoints' => true
-            )
-        );
-
-        $gridChart->drawLines(
-            array(
-                'label' => 'UNKNOWN',
-                'color' => '#a4f',
-                'data'  =>  $data['unknown'],
-                'showPoints' => true
-            )
-        );
+        foreach (static::$colors['service'] as $status => $color) {
+            $gridChart->drawLines(array(
+                'label'         => strtoupper($status),
+                'color'         => $color,
+                'data'          =>  $data[$status],
+                'showPoints'    => true
+            ));
+        }
 
         return $gridChart;
     }
@@ -242,32 +215,13 @@ class Monitoring_AlerthistogramController extends Controller
             ->setXAxis(new StaticAxis())
             ->setAxisMin(null, 0);
 
-        $gridChart->drawLines(
-            array(
-                'label' => 'Recovery (Up)',
-                'color' => '#4b7',
-                'data'  =>  $data['up'],
-                'showPoints' => true
-            )
-        );
-
-        $gridChart->drawLines(
-            array(
-                'label' => 'Down',
-                'color' => '#f56',
-                'data'  =>  $data['down'],
-                'showPoints' => true
-            )
-        );
-
-        $gridChart->drawLines(
-            array(
-                'label' => 'Unreachable',
-                'color' => '#a4f',
-                'data'  =>  $data['unreachable'],
-                'showPoints' => true
-            )
-        );
+        foreach (static::$colors['host'] as $status => $color) {
+            $gridChart->drawLines(array(
+                'label'         => (($status === 'up') ? 'Recovery (Up)' : ucfirst($status)),
+                'color'         => $color,
+                'data'          => $data[$status],
+                'showPoints'    => true
+            ));
 
         return $gridChart;
     }
