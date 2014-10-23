@@ -39,6 +39,9 @@ class Monitoring_AlerthistogramController extends Controller
         )
     );
 
+    const FETCH = 1;
+    const ALL = 2;
+
     protected $url;
 
     public function init()
@@ -58,6 +61,38 @@ class Monitoring_AlerthistogramController extends Controller
 
     public function indexAction()
     {
+        $target = array();
+
+        foreach (static::$labels as $type => $value) {
+            $target[$type] = array();
+            foreach (array('', 'group') as $suffix) {
+                $param = $type . $suffix;
+                if ($this->params->has($param)) {
+                    $target[$type][$suffix] = $this->params->get($param);
+                }
+            }
+        }
+        foreach ($target as $key => $value) {
+            if (empty($value)) {
+                unset($target[$key]);
+            }
+        }
+
+        $whatToFetch = array();
+
+        if (array_key_exists('service', $target)) {
+            $whatToFetch['service'] = static::FETCH;
+            $whatToFetch['host'] = array_key_exists('host', $target)
+                ? 0 : static::ALL;
+        } else if (array_key_exists('host', $target)) {
+            $whatToFetch['host'] = static::FETCH;
+            $whatToFetch['service'] = 0;
+        } else {
+            foreach (static::$labels as $key => $value) {
+                $whatToFetch[$key] = static::FETCH | static::ALL;
+            }
+        }
+
         $this->addTitleTab('alerthistogram', $this->translate('Alert Histogram'));
 
         $this->view->intervalBox = $this->createIntervalBox();
