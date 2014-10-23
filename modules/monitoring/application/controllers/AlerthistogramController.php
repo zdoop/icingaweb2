@@ -123,6 +123,12 @@ class Monitoring_AlerthistogramController extends Controller
         return $this;
     }
 
+    private function hostsFromGroup($hostgroup) {
+        return $this->backend->select()->from(
+            'Hostgroup', array('host')
+        )->where('hostgroup_name', $hostgroup)->getQuery()->fetchAll();
+    }
+
     private function createHistogram($type, $which)
     {
         $interval = $this->getInterval();
