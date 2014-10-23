@@ -39,6 +39,20 @@ class Monitoring_AlerthistogramController extends Controller
         )
     );
 
+    protected static $states = array(
+        'host'      => array(
+            '0' => 'up',
+            '1' => 'down',
+            '2' => 'unreachable'
+        ),
+        'service'   => array(
+            '0' => 'ok',
+            '1' => 'warning',
+            '2' => 'critical',
+            '3' => 'unknown'
+        )
+    );
+
     const FETCH = 1;
     const ALL = 2;
 
