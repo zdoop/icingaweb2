@@ -140,22 +140,11 @@ class Monitoring_AlerthistogramController extends Controller
             }
 
             foreach ($records as $record) {
-                $index = $this->getPeriodFormat($interval, $record->timestamp);
-
-                switch ($record->state) {
-                    case '0':
-                        $data['ok'][$index][1]++;
-                        break;
-                    case '1':
-                        $data['warning'][$index][1]++;
-                        break;
-                    case '2':
-                        $data['critical'][$index][1]++;
-                        break;
-                    case '3':
-                        $data['unknown'][$index][1]++;
-                        break;
-                }
+                ++$data[
+                    static::$states['service'][(int)$record->state]
+                ][
+                    $this->getPeriodFormat($interval, $record->timestamp)
+                ][1];
             }
 
         } elseif ($type === 'host') {
@@ -177,19 +166,11 @@ class Monitoring_AlerthistogramController extends Controller
             }
 
             foreach ($records as $record) {
-                $index = $this->getPeriodFormat($interval, $record->timestamp);
-
-                switch ($record->state) {
-                    case '0':
-                        $data['up'][$index][1]++;
-                        break;
-                    case '1':
-                        $data['down'][$index][1]++;
-                        break;
-                    case '2':
-                        $data['unreachable'][$index][1]++;
-                        break;
-                }
+                ++$data[
+                    static::$states['host'][(int)$record->state]
+                ][
+                    $this->getPeriodFormat($interval, $record->timestamp)
+                ][1];
             }
         }
 
