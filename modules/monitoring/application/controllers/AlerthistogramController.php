@@ -117,38 +117,10 @@ class Monitoring_AlerthistogramController extends Controller
         $type = 'service';
 
         $this->view->chart = $this->createHistogram(
-            $type, $this->prepareData(
-                $type, ($type === 'host') ? $host : $service
-            )
+            $type, ($type === 'host') ? $host : $service
         );
 
         return $this;
-    }
-
-    private function prepareData($type, $which) {
-        $interval = $this->getInterval();
-        $data = array();
-
-        foreach (static::$labels[$type] as $key => $value) {
-            $data[$key] = array();
-        }
-
-        foreach ($this->createPeriod($interval) as $entry) {
-            $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
-            foreach (static::$labels[$type] as $key => $value) {
-                $data[$key][$index] = array($index, 0);
-            }
-        }
-
-        foreach ($this->{'get' . ucfirst($type) . 'Records'}($interval, $which) as $record) {
-            ++$data[
-                static::$states[$type][(int)$record->state]
-            ][
-                $this->getPeriodFormat($interval, $record->timestamp)
-            ][1];
-        }
-
-        return $data;
     }
 
     private function getServiceRecords($interval, $service)
@@ -199,9 +171,30 @@ class Monitoring_AlerthistogramController extends Controller
         return $query->getQuery()->fetchAll();
     }
 
-    private function createHistogram($type, $data)
+    private function createHistogram($type, $which)
     {
+        $interval = $this->getInterval();
+        $data = array();
         $gridChart = new HistogramGridChart();
+
+        foreach (static::$labels[$type] as $key => $value) {
+            $data[$key] = array();
+        }
+
+        foreach ($this->createPeriod($interval) as $entry) {
+            $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
+            foreach (static::$labels[$type] as $key => $value) {
+                $data[$key][$index] = array($index, 0);
+            }
+        }
+
+        foreach ($this->{'get' . ucfirst($type) . 'Records'}($interval, $which) as $record) {
+            ++$data[
+                static::$states[$type][(int)$record->state]
+            ][
+                $this->getPeriodFormat($interval, $record->timestamp)
+            ][1];
+        }
 
         $gridChart->alignTopLeft();
         $gridChart->setAxisLabel('Date', 'Events')
