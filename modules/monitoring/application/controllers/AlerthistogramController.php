@@ -123,57 +123,31 @@ class Monitoring_AlerthistogramController extends Controller
         return $this;
     }
 
-    private function getServiceRecords($interval, $service)
-    {
-        /** @var \Icinga\Module\Monitoring\DataView\DataView $query */
-        $query = $this->backend->select()->from('eventHistory', array(
-            'object_type',
-            'service',
-            'timestamp',
-            'state',
-            'type'
-        ))->order('timestamp', 'ASC')
-            ->where('service', $service)
-            ->where('object_type', 'service');
-
-        $query->addFilter(
-            new Icinga\Data\Filter\FilterExpression(
-                'timestamp',
-                '>=',
-                $this->getBeginDate($interval)->getTimestamp()
-            )
-        );
-
-        return $query->getQuery()->fetchAll();
-    }
-
-    private function getHostRecords($interval, $host)
-    {
-        /** @var \Icinga\Module\Monitoring\DataView\DataView $query */
-        $query = $this->backend->select()->from('eventHistory', array(
-            'object_type',
-            'host_name',
-            'timestamp',
-            'state',
-            'type'
-        ))->order('timestamp', 'ASC')
-          ->where('host_name', $host)
-          ->where('object_type', 'host');
-
-        $query->addFilter(
-            new Icinga\Data\Filter\FilterExpression(
-                'timestamp',
-                '>=',
-                $this->getBeginDate($interval)->getTimestamp()
-            )
-        );
-
-        return $query->getQuery()->fetchAll();
-    }
-
     private function createHistogram($type, $which)
     {
         $interval = $this->getInterval();
+
+        // $query
+        $key = ($type === 'host') ? 'host_name' : 'service';
+        $query = $this->backend->select()->from('eventHistory', array(
+            'object_type',
+            $key,
+            'timestamp',
+            'state',
+            'type'
+        ))->order('timestamp', 'ASC')
+          ->where($key, $which)
+          ->where('object_type', $type);
+
+        $query->addFilter(
+            new Icinga\Data\Filter\FilterExpression(
+                'timestamp',
+                '>=',
+                $this->getBeginDate($interval)->getTimestamp()
+            )
+        );
+
+        // $data
         $data = array();
         $gridChart = new HistogramGridChart();
 
@@ -188,7 +162,7 @@ class Monitoring_AlerthistogramController extends Controller
             }
         }
 
-        foreach ($this->{'get' . ucfirst($type) . 'Records'}($interval, $which) as $record) {
+        foreach ($query->getQuery()->fetchAll() as $record) {
             ++$data[
                 static::$states[$type][(int)$record->state]
             ][
@@ -196,6 +170,7 @@ class Monitoring_AlerthistogramController extends Controller
             ][1];
         }
 
+        // $gridChart
         $gridChart->alignTopLeft();
         $gridChart->setAxisLabel('Date', 'Events')
             ->setXAxis(new StaticAxis())
