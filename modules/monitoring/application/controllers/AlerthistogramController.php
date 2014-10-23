@@ -111,72 +111,44 @@ class Monitoring_AlerthistogramController extends Controller
 
         $this->view->intervalBox = $this->createIntervalBox();
 
-        $interval = $this->getInterval();
         $host = $this->getHost();
         $service = $this->getService();
 
-        $period = $this->createPeriod($interval);
-
         $type = 'service';
 
-        if ($type === 'service') {
+        $this->view->chart = $this->createHistogram(
+            $type, $this->prepareData(
+                $type, ($type === 'host') ? $host : $service
+            )
+        );
 
-            $records = $this->getServiceRecords($interval, $service);
+        return $this;
+    }
 
-            $data = array(
-                'ok' => array(),
-                'warning' => array(),
-                'critical' => array(),
-                'unknown' => array(),
-            );
+    private function prepareData($type, $which) {
+        $interval = $this->getInterval();
+        $data = array();
 
-            foreach ($period as $entry) {
-                $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
+        foreach (static::$labels[$type] as $key => $value) {
+            $data[$key] = array();
+        }
 
-                $data['ok'][$index] = array($index, 0);
-                $data['warning'][$index] = array($index, 0);
-                $data['critical'][$index] = array($index, 0);
-                $data['unknown'][$index] = array($index, 0);
-            }
-
-            foreach ($records as $record) {
-                ++$data[
-                    static::$states['service'][(int)$record->state]
-                ][
-                    $this->getPeriodFormat($interval, $record->timestamp)
-                ][1];
-            }
-
-        } elseif ($type === 'host') {
-
-            $records = $this->getHostRecords($interval, $host);
-
-            $data = array(
-                'up' => array(),
-                'down' => array(),
-                'unreachable' => array()
-            );
-
-            foreach ($period as $entry) {
-                $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
-
-                $data['up'][$index] = array($index, 0);
-                $data['down'][$index] = array($index, 0);
-                $data['unreachable'][$index] = array($index, 0);
-            }
-
-            foreach ($records as $record) {
-                ++$data[
-                    static::$states['host'][(int)$record->state]
-                ][
-                    $this->getPeriodFormat($interval, $record->timestamp)
-                ][1];
+        foreach ($this->createPeriod($interval) as $entry) {
+            $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
+            foreach (static::$labels[$type] as $key => $value) {
+                $data[$key][$index] = array($index, 0);
             }
         }
 
-        $this->view->chart = $this->createHistogram($type, $data);
+        foreach ($this->{'get' . ucfirst($type) . 'Records'}($interval, $which) as $record) {
+            ++$data[
+                static::$states[$type][(int)$record->state]
+            ][
+                $this->getPeriodFormat($interval, $record->timestamp)
+            ][1];
+        }
 
-        return $this;
+        return $data;
     }
 
     private function getServiceRecords($interval, $service)
