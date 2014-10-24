@@ -51,4 +51,21 @@ class CommenthistoryQuery extends IdoQuery
         $this->joinedVirtualTables = array('commenthistory' => true);
     }
 
+    protected function joinHostgroups()
+    {
+        $this->select->join(
+            array('hgm' => $this->prefix . 'hostgroup_members'),
+            'hgm.host_object_id = eho.object_id',
+            array()
+        )->join(
+            array('hg' => $this->prefix . 'hostgroups'),
+            'hgm.hostgroup_id = hg.' . $this->hostgroup_id,
+            array()
+        )->join(
+            array('hgo' => $this->prefix . 'objects'),
+            'hgo.' . $this->object_id. ' = hg.hostgroup_object_id' . ' AND hgo.is_active = 1',
+            array()
+        );
+        return $this;
+    }
 }
