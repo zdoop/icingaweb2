@@ -123,10 +123,10 @@ class Monitoring_AlerthistogramController extends Controller
         return $this;
     }
 
-    private function hostsFromGroup($hostgroup) {
+    private function groupMembers($type, $group) {
         return $this->backend->select()->from(
-            'Hostgroup', array('host')
-        )->where('hostgroup_name', $hostgroup)->getQuery()->fetchAll();
+            ucfirst($type) . 'group', array($type)
+        )->where($type . 'group_name', $group)->getQuery()->fetchAll();
     }
 
     private function createHistogram($type, $which)
