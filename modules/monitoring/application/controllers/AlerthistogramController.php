@@ -107,6 +107,25 @@ class Monitoring_AlerthistogramController extends Controller
             }
         }
 
+        $filters = array();
+
+        foreach (static::$labels as $type => $label) {
+            $filters[$type] = array();
+            if (!($whatToFetch[$type] & static::ALL)) {
+                foreach ($target[$type] as $suffix => $value) {
+                    switch ($suffix) {
+                        case '':
+                            $filters[$type][] = $value;
+                            break;
+                        case 'group':
+                            foreach ($this->groupMembers($type, $value) as $member) {
+                                $filters[$type][] = $member->{$type};
+                            }
+                    }
+                }
+            }
+        }
+
         $this->addTitleTab('alerthistogram', $this->translate('Alert Histogram'));
 
         $this->view->intervalBox = $this->createIntervalBox();
