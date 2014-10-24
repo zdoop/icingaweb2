@@ -31,6 +31,9 @@ class StatehistoryQuery extends IdoQuery
             'service_host_name'   => 'sho.name1 COLLATE latin1_general_ci',
             'service_description' => 'sho.name2 COLLATE latin1_general_ci',
             'object_type'         => "CASE WHEN sho.objecttype_id = 1 THEN 'host' ELSE 'service' END"
+        ),
+        'hostgroups' => array(
+            'hostgroup' => 'hgo.name1 COLLATE latin1_general_ci'
         )
     );
 
@@ -65,7 +68,7 @@ class StatehistoryQuery extends IdoQuery
     {
         $this->select->join(
             array('hgm' => $this->prefix . 'hostgroup_members'),
-            'hgm.host_object_id = eho.object_id',
+            'hgm.host_object_id = sho.object_id',
             array()
         )->join(
             array('hg' => $this->prefix . 'hostgroups'),

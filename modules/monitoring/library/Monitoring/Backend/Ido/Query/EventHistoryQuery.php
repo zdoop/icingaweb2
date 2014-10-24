@@ -29,7 +29,7 @@ class EventHistoryQuery extends IdoQuery
             'max_attempts'        => 'eh.max_attempts',
             'output'              => 'eh.output', // we do not want long_output
             'type'                => 'eh.type',
-            'hostgroup'           => 'eh.hostgroup',
+            'hostgroup'           => '(NULL)', // We do not allow to fetch hostgroups, this is for filters only
             'service_host_name'   => 'eho.name1 COLLATE latin1_general_ci',
             'service_description' => 'eho.name2 COLLATE latin1_general_ci'
         )
@@ -88,12 +88,14 @@ class EventHistoryQuery extends IdoQuery
 		    return $this;
     }
 
-	  public function where($condition, $value = null)
-	  {
-		  $this->requireColumn($condition);
-		  foreach ($this->subQueries as $sub) {
-		      $sub->where($condition, $value);
-		  }
-		  return $this;
-	  }
+    public function where($condition, $value = null)
+    {
+        if ($condition !== 'hostgroup') {
+            $this->requireColumn($condition);
+        }
+        foreach ($this->subQueries as $sub) {
+            $sub->where($condition, $value);
+        }
+        return $this;
+    }
 }
