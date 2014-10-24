@@ -55,9 +55,6 @@ class Monitoring_AlerthistogramController extends Controller
         )
     );
 
-    const FETCH = 1;
-    const ALL = 2;
-
     protected $url;
 
     public function init()
@@ -87,15 +84,14 @@ class Monitoring_AlerthistogramController extends Controller
         $whatToFetch = array();
 
         if (array_key_exists('service', $target)) {
-            $whatToFetch['service'] = static::FETCH;
-            $whatToFetch['host'] = array_key_exists('host', $target)
-                ? 0 : static::ALL;
+            $whatToFetch['service'] = true;
+            $whatToFetch['host'] = false;
         } else if (array_key_exists('host', $target)) {
-            $whatToFetch['host'] = static::FETCH;
-            $whatToFetch['service'] = 0;
+            $whatToFetch['host'] = true;
+            $whatToFetch['service'] = false;
         } else {
             foreach (static::$labels as $key => $value) {
-                $whatToFetch[$key] = static::FETCH | static::ALL;
+                $whatToFetch[$key] = true;
             }
         }
 
@@ -125,7 +121,7 @@ class Monitoring_AlerthistogramController extends Controller
         $this->view->charts = array();
 
         foreach (static::$labels as $type => $label) {
-            if ($whatToFetch[$type] & static::FETCH) {
+            if ($whatToFetch[$type]) {
                 $filter = null;
                 if ($type === 'service' && false === empty($filters['host'])) {
                     $hosts = array();
