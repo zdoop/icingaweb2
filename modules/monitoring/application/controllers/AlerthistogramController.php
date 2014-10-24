@@ -64,16 +64,6 @@ class Monitoring_AlerthistogramController extends Controller
         $this->url = Url::fromRequest();
     }
 
-    private function getHost()
-    {
-        return 'test-random-10';
-    }
-
-    private function getService()
-    {
-        return 'service-flapping-1';
-    }
-
     public function indexAction()
     {
         $target = array();
