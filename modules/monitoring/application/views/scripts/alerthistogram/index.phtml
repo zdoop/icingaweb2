@@ -4,12 +4,15 @@
         <?= $intervalBox; ?>
     </div>
 </div>
+<?php foreach ($charts as $type => $chart): ?>
 
 <div class="content alerthistogram">
-    <h1><?= $this->translate('Alert Histogram') ?> for Host xyz</h1>
+    <h1><?php printf(
+    $this->translate('Alert Histogram for %s'),
+    $type
+); ?></h1>
 </div>
 
-<?php foreach ($charts as $type => $chart): ?>
 <div class="svg-container-responsive">
     <?= $chart->render() ?>
 </div>
