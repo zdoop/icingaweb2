@@ -9,6 +9,8 @@
     <h1><?= $this->translate('Alert Histogram') ?> for Host xyz</h1>
 </div>
 
+<?php foreach ($charts as $type => $chart): ?>
 <div class="svg-container-responsive">
     <?= $chart->render() ?>
 </div>
+<?php endforeach; ?>

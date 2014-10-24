@@ -102,7 +102,7 @@ class Monitoring_AlerthistogramController extends Controller
 
         foreach (static::$labels as $type => $label) {
             $filters[$type] = array();
-            if (!($whatToFetch[$type] & static::ALL)) {
+            if (array_key_exists($type, $target)) {
                 foreach ($target[$type] as $suffix => $value) {
                     switch ($suffix) {
                         case '':
@@ -121,11 +121,15 @@ class Monitoring_AlerthistogramController extends Controller
 
         $this->view->intervalBox = $this->createIntervalBox();
 
-        $type = 'service';
+        $this->view->charts = array();
 
-        $this->view->chart = $this->createHistogram(
-            $type, $filters[$type]
-        );
+        foreach (static::$labels as $type => $label) {
+            if ($whatToFetch[$type] & static::FETCH) {
+                $this->view->charts[$type] = $this->createHistogram(
+                    $type, $filters[$type]
+                );
+            }
+        }
 
         return $this;
     }
