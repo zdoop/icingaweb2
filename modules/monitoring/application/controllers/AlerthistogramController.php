@@ -2,12 +2,13 @@
 // {{{ICINGA_LICENSE_HEADER}}}
 // {{{ICINGA_LICENSE_HEADER}}}
 
-use Icinga\Web\Url;
-use Icinga\Chart\GridChart;
 use Icinga\Chart\Unit\StaticAxis;
+use Icinga\Data\Filter\FilterExpression;
+use Icinga\Data\Filter\FilterOr;
+use Icinga\Module\Monitoring\Chart\HistogramGridChart;
 use Icinga\Module\Monitoring\Controller;
 use Icinga\Module\Monitoring\Web\Widget\SelectBox;
-use Icinga\Module\Monitoring\Chart\HistogramGridChart;
+use Icinga\Web\Url;
 
 class Monitoring_AlerthistogramController extends Controller
 {
@@ -130,13 +131,10 @@ class Monitoring_AlerthistogramController extends Controller
 
         $this->view->intervalBox = $this->createIntervalBox();
 
-        $host = $this->getHost();
-        $service = $this->getService();
-
         $type = 'service';
 
         $this->view->chart = $this->createHistogram(
-            $type, ($type === 'host') ? $host : $service
+            $type, $filters[$type]
         );
 
         return $this;
@@ -150,10 +148,8 @@ class Monitoring_AlerthistogramController extends Controller
 
     private function createHistogram($type, $which)
     {
-        $interval = $this->getInterval();
-
-        // $query
         $key = ($type === 'host') ? 'host_name' : 'service';
+
         $query = $this->backend->select()->from('eventHistory', array(
             'object_type',
             $key,
@@ -161,20 +157,31 @@ class Monitoring_AlerthistogramController extends Controller
             'state',
             'type'
         ))->order('timestamp', 'ASC')
-          ->where($key, $which)
           ->where('object_type', $type);
 
+        $interval = $this->getInterval();
+
         $query->addFilter(
-            new Icinga\Data\Filter\FilterExpression(
+            new FilterExpression(
                 'timestamp',
                 '>=',
                 $this->getBeginDate($interval)->getTimestamp()
             )
         );
 
-        // $data
+        if (false === empty($which)) {
+            $filters = array();
+
+            foreach ($which as $subject) {
+                $filters[] = new FilterExpression(
+                    $key, '=', $subject
+                );
+            }
+
+            $query->addFilter(new FilterOr($filters));
+        }
+
         $data = array();
-        $gridChart = new HistogramGridChart();
 
         foreach (static::$labels[$type] as $key => $value) {
             $data[$key] = array();
@@ -195,7 +202,8 @@ class Monitoring_AlerthistogramController extends Controller
             ][1];
         }
 
-        // $gridChart
+        $gridChart = new HistogramGridChart();
+
         $gridChart->alignTopLeft();
         $gridChart->setAxisLabel('Date', 'Events')
             ->setXAxis(new StaticAxis())
