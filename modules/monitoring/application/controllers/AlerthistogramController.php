@@ -64,79 +64,78 @@ class Monitoring_AlerthistogramController extends Controller
 
     public function indexAction()
     {
-        $target = array();
+        $data = array();
+        foreach (static::$labels as $type => $labels) {
+            $data[$type] = array();
+            foreach ($labels as $key => $value) {
+                $data[$type][$key] = array();
+            }
+        }
 
-        foreach (static::$labels as $type => $value) {
-            $target[$type] = array();
-            foreach (array('', 'group') as $suffix) {
-                $param = $type . $suffix;
-                if ($this->params->has($param)) {
-                    $target[$type][$suffix] = $this->params->get($param);
+        $interval = $this->getInterval();
+
+        foreach ($this->createPeriod($interval) as $entry) {
+            $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
+            foreach ($data as $type => $stats) {
+                foreach ($stats as $stat => $value) {
+                    $data[$type][$stat][$index] = array($index, 0);
                 }
             }
         }
-        foreach ($target as $key => $value) {
-            if (empty($value)) {
-                unset($target[$key]);
-            }
+
+        foreach ($this->backend->select()->from('eventHistory', array(
+                'object_type',
+                'host',
+                'service',
+                'timestamp',
+                'state',
+                'type',
+                'hostgroup',
+                //'servicegroup'
+            ))
+                ->addFilter(new FilterOr(array(
+                    new FilterExpression('object_type', '=', 'host'),
+                    new FilterExpression('object_type', '=', 'service')
+                )))
+                ->addFilter(Filter::fromQueryString((string) $this->params))
+                ->addFilter(new FilterExpression(
+                    'timestamp', '>=',
+                    $this->getBeginDate($interval)->getTimestamp()
+                ))
+                ->order('timestamp', 'ASC')
+                ->getQuery()
+                ->fetchAll() as $record) {
+            $type = ($record->service === null) ? 'host' : 'service';
+            ++$data[$type][
+                static::$states[$type][$record->state]
+            ][
+                $this->getPeriodFormat($interval, $record->timestamp)
+            ][1];
         }
 
-        $whatToFetch = array();
+        $this->view->charts = array();
 
-        if (array_key_exists('service', $target)) {
-            $whatToFetch['service'] = true;
-            $whatToFetch['host'] = false;
-        } else if (array_key_exists('host', $target)) {
-            $whatToFetch['host'] = true;
-            $whatToFetch['service'] = false;
-        } else {
-            foreach (static::$labels as $key => $value) {
-                $whatToFetch[$key] = true;
+        foreach ($data as $type => $stats) {
+            $gridChart = new HistogramGridChart();
+            $gridChart->alignTopLeft();
+            $gridChart
+                ->setAxisLabel('Date', 'Events')
+                ->setXAxis(new StaticAxis())
+                ->setAxisMin(null, 0);
+            foreach ($stats as $stat => $value) {
+                $gridChart->drawLines(array(
+                    'label'         => static::$labels[$type][$stat],
+                    'color'         => static::$colors[$type][$stat],
+                    'data'          => $value,
+                    'showPoints'    => true
+                ));
             }
-        }
-
-        $filters = array();
-
-        foreach (static::$labels as $type => $label) {
-            $filters[$type] = array();
-            if (array_key_exists($type, $target)) {
-                foreach ($target[$type] as $suffix => $value) {
-                    switch ($suffix) {
-                        case '':
-                            $filters[$type][] = $value;
-                            break;
-                        case 'group':
-                            foreach ($this->groupMembers($type, $value) as $member) {
-                                $filters[$type][] = $member->{$type};
-                            }
-                    }
-                }
-            }
+            $this->view->charts[$type] = $gridChart;
         }
 
         $this->addTitleTab('alerthistogram', $this->translate('Alert Histogram'));
 
         $this->view->intervalBox = $this->createIntervalBox();
-
-        $this->view->charts = array();
-
-        foreach (static::$labels as $type => $label) {
-            if ($whatToFetch[$type]) {
-                $filter = null;
-                if ($type === 'service' && false === empty($filters['host'])) {
-                    $hosts = array();
-                    foreach ($filters['host'] as $host) {
-                        $hosts[] = new FilterExpression(
-                            'host_name', '=', $host
-                        );
-                    }
-                    $filter = new FilterOr($hosts);
-                }
-                $this->view->charts[$type] = $this->createHistogram(
-                    $type, $filters[$type], $filter
-                );
-            }
-        }
 
         return $this;
     }
@@ -186,42 +185,6 @@ class Monitoring_AlerthistogramController extends Controller
             $query->addFilter(new FilterOr($filters));
         }
 
-        $data = array();
-
-        foreach (static::$labels[$type] as $key => $value) {
-            $data[$key] = array();
-        }
-
-        foreach ($this->createPeriod($interval) as $entry) {
-            $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
-            foreach (static::$labels[$type] as $key => $value) {
-                $data[$key][$index] = array($index, 0);
-            }
-        }
-
-        foreach ($query->getQuery()->fetchAll() as $record) {
-            ++$data[
-                static::$states[$type][(int)$record->state]
-            ][
-                $this->getPeriodFormat($interval, $record->timestamp)
-            ][1];
-        }
-
-        $gridChart = new HistogramGridChart();
-
-        $gridChart->alignTopLeft();
-        $gridChart->setAxisLabel('Date', 'Events')
-            ->setXAxis(new StaticAxis())
-            ->setAxisMin(null, 0);
-
-        foreach (static::$colors[$type] as $status => $color) {
-            $gridChart->drawLines(array(
-                'label'         => static::$labels[$type][$status],
-                'color'         => $color,
-                'data'          => $data[$status],
-                'showPoints'    => true
-            ));
-        }
 
         return $gridChart;
     }
