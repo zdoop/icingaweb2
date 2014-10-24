@@ -3,6 +3,7 @@
 // {{{ICINGA_LICENSE_HEADER}}}
 
 use Icinga\Chart\Unit\StaticAxis;
+use Icinga\Data\Filter\Filter;
 use Icinga\Data\Filter\FilterExpression;
 use Icinga\Data\Filter\FilterOr;
 use Icinga\Module\Monitoring\Chart\HistogramGridChart;
@@ -125,8 +126,18 @@ class Monitoring_AlerthistogramController extends Controller
 
         foreach (static::$labels as $type => $label) {
             if ($whatToFetch[$type] & static::FETCH) {
+                $filter = null;
+                if ($type === 'service' && false === empty($filters['host'])) {
+                    $hosts = array();
+                    foreach ($filters['host'] as $host) {
+                        $hosts[] = new FilterExpression(
+                            'host_name', '=', $host
+                        );
+                    }
+                    $filter = new FilterOr($hosts);
+                }
                 $this->view->charts[$type] = $this->createHistogram(
-                    $type, $filters[$type]
+                    $type, $filters[$type], $filter
                 );
             }
         }
@@ -140,9 +151,9 @@ class Monitoring_AlerthistogramController extends Controller
         )->where($type . 'group_name', $group)->getQuery()->fetchAll();
     }
 
-    private function createHistogram($type, $which)
+    private function createHistogram($type, $which, Filter $filter = null)
     {
-        $key = ($type === 'host') ? 'host_name' : 'service';
+        $key = ($type === 'host') ? 'host_name' : $type;
 
         $query = $this->backend->select()->from('eventHistory', array(
             'object_type',
@@ -162,6 +173,10 @@ class Monitoring_AlerthistogramController extends Controller
                 $this->getBeginDate($interval)->getTimestamp()
             )
         );
+
+        if ($filter !== null) {
+            $query->addFilter($filter);
+        }
 
         if (false === empty($which)) {
             $filters = array();
