@@ -130,20 +130,20 @@ class Monitoring_AlerthistogramController extends Controller
             $query->addFilter(Filter::fromQueryString($params));
         }
 
-        foreach ($query
-                ->addFilter(new FilterExpression(
-                    'timestamp', '>=',
-                    $this->getBeginDate($interval)->getTimestamp()
-                ))
-                ->order('timestamp', 'ASC')
-                ->getQuery()
-                ->fetchAll() as $record) {
+        foreach (
+            $query->addFilter(new FilterExpression(
+                'timestamp',
+                '>=',
+                $this->getBeginDate($interval)->getTimestamp()
+            ))
+            ->order('timestamp', 'ASC')
+            ->getQuery()
+            ->fetchAll() as $record
+        ) {
             $type = $record->object_type;
-            ++$data[$type][
-                static::$states[$type][$record->state]
-            ][
-                $this->getPeriodFormat($interval, $record->timestamp)
-            ][1];
+            $state = static::$states[$type][$record->state];
+            $dateTime = $this->getPeriodFormat($interval, $record->timestamp);
+            ++$data[$type][$state][$dateTime][1];
         }
 
         $this->view->charts = array();
