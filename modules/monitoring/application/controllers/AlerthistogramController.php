@@ -94,7 +94,7 @@ class Monitoring_AlerthistogramController extends Controller
         }
 
         $interval = $this->getParam('interval', '1d');
-        if (false === in_array($interval, array('1d', '1w', '1m', '1y'))) {
+        if (false === array_key_exists($interval, static::$periodFormats)) {
             throw new Zend_Controller_Action_Exception(sprintf(
                 $this->translate('Value \'%s\' for interval is not valid'),
                 $interval
