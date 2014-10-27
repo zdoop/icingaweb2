@@ -116,6 +116,22 @@ class Monitoring_AlerthistogramController extends Controller
         $this->view->charts = array();
 
         foreach ($data as $type => $stats) {
+            foreach ($stats as $stat => $values) {
+                $keepStat = false;
+                foreach ($values as $value) {
+                    if ($value[1] !== 0) {
+                        $keepStat = true;
+                    }
+                }
+                if (false === $keepStat) {
+                    unset($data[$type][$stat]);
+                }
+            }
+            if (empty($data[$type])) {
+                unset($data[$type]);
+                continue;
+            }
+
             $gridChart = new HistogramGridChart();
             $gridChart->alignTopLeft();
             $gridChart
