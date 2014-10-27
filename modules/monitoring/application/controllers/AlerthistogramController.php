@@ -91,7 +91,7 @@ class Monitoring_AlerthistogramController extends Controller
                 'state',
                 'type',
                 'hostgroup',
-                //'servicegroup'
+                'servicegroup'
             ))
                 ->addFilter(new FilterOr(array(
                     new FilterExpression('object_type', '=', 'host'),

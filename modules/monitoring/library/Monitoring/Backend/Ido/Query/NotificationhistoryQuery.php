@@ -29,6 +29,9 @@ class NotificationhistoryQuery extends IdoQuery
         ),
         'hostgroups' => array(
             'hostgroup' => 'hgo.name1 COLLATE latin1_general_ci'
+        ),
+        'servicegroups' => array(
+            'servicegroup' => 'sgo.name1 COLLATE latin1_general_ci'
         )
     );
 
@@ -112,6 +115,24 @@ class NotificationhistoryQuery extends IdoQuery
         )->join(
             array('hgo' => $this->prefix . 'objects'),
             'hgo.' . $this->object_id. ' = hg.hostgroup_object_id' . ' AND hgo.is_active = 1',
+            array()
+        );
+        return $this;
+    }
+
+    protected function joinServicegroups()
+    {
+        $this->select->join(
+            array('sgm' => $this->prefix . 'servicegroup_members'),
+            'sgm.service_object_id = o.object_id',
+            array()
+        )->join(
+            array('sg' => $this->prefix . 'servicegroups'),
+            'sgm.servicegroup_id = sg.' . $this->servicegroup_id,
+            array()
+        )->join(
+            array('sgo' => $this->prefix . 'objects'),
+            'sgo.' . $this->object_id. ' = sg.servicegroup_object_id' . ' AND sgo.is_active = 1',
             array()
         );
         return $this;

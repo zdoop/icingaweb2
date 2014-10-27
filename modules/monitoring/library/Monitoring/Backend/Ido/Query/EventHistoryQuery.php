@@ -30,6 +30,7 @@ class EventHistoryQuery extends IdoQuery
             'output'              => 'eh.output', // we do not want long_output
             'type'                => 'eh.type',
             'hostgroup'           => '(NULL)', // We do not allow to fetch hostgroups, this is for filters only
+            'servicegroup'        => '(NULL)', // We do not allow to fetch servicegroups, this is for filters only
             'service_host_name'   => 'eho.name1 COLLATE latin1_general_ci',
             'service_description' => 'eho.name2 COLLATE latin1_general_ci'
         )
@@ -90,7 +91,7 @@ class EventHistoryQuery extends IdoQuery
 
     public function where($condition, $value = null)
     {
-        if ($condition !== 'hostgroup') {
+        if ($condition !== 'hostgroup' && $condition !== 'servicegroup') {
             $this->requireColumn($condition);
         }
         foreach ($this->subQueries as $sub) {
