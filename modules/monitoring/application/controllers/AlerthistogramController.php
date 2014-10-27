@@ -72,7 +72,14 @@ class Monitoring_AlerthistogramController extends Controller
             }
         }
 
-        $interval = $this->getInterval();
+        $interval = $this->getParam('interval', '1d');
+        if (false === in_array($interval, array('1d', '1w', '1m', '1y'))) {
+            throw new Zend_Controller_Action_Exception(sprintf(
+                $this->translate('Value \'%s\' for interval is not valid'),
+                $interval
+            ));
+        }
+        $this->params->remove('interval');
 
         foreach ($this->createPeriod($interval) as $entry) {
             $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
@@ -238,16 +245,6 @@ class Monitoring_AlerthistogramController extends Controller
         }
 
         return null;
-    }
-
-    private function getInterval()
-    {
-        $interval = $this->getParam('interval', '1d');
-        if (false === in_array($interval, array('1d', '1w', '1m', '1y'))) {
-            throw new Zend_Controller_Action_Exception($this->translate('Value for interval is not valid'));
-        }
-
-        return $interval;
     }
 
     private function createIntervalBox()
