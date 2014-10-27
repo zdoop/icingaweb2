@@ -161,55 +161,6 @@ class Monitoring_AlerthistogramController extends Controller
         return $this;
     }
 
-    private function groupMembers($type, $group) {
-        return $this->backend->select()->from(
-            ucfirst($type) . 'group', array($type)
-        )->where($type . 'group_name', $group)->getQuery()->fetchAll();
-    }
-
-    private function createHistogram($type, $which, Filter $filter = null)
-    {
-        $key = ($type === 'host') ? 'host_name' : $type;
-
-        $query = $this->backend->select()->from('eventHistory', array(
-            'object_type',
-            $key,
-            'timestamp',
-            'state',
-            'type'
-        ))->order('timestamp', 'ASC')
-          ->where('object_type', $type);
-
-        $interval = $this->getInterval();
-
-        $query->addFilter(
-            new FilterExpression(
-                'timestamp',
-                '>=',
-                $this->getBeginDate($interval)->getTimestamp()
-            )
-        );
-
-        if ($filter !== null) {
-            $query->addFilter($filter);
-        }
-
-        if (false === empty($which)) {
-            $filters = array();
-
-            foreach ($which as $subject) {
-                $filters[] = new FilterExpression(
-                    $key, '=', $subject
-                );
-            }
-
-            $query->addFilter(new FilterOr($filters));
-        }
-
-
-        return $gridChart;
-    }
-
     protected function addTitleTab($action, $title = false)
     {
         $title = $title ?: ucfirst($action);
