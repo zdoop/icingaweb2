@@ -62,6 +62,13 @@ class Monitoring_AlerthistogramController extends Controller
         '1y' => '%Y-%m'
     );
 
+    protected static $datePeriods = array(
+        '1d' => array('PT1H', 24),
+        '1w' => array('P1D',   7),
+        '1m' => array('P1D',  30),
+        '1y' => array('P1M',  12)
+    );
+
     protected $url;
 
     public function init()
@@ -197,22 +204,12 @@ class Monitoring_AlerthistogramController extends Controller
 
     private function createPeriod($interval)
     {
-        switch ($interval) {
-            case '1d':
-                return new DatePeriod($this->getBeginDate($interval), new DateInterval('PT1H'), 24);
-                break;
-            case '1w':
-                return new DatePeriod($this->getBeginDate($interval), new DateInterval('P1D'), 7);
-                break;
-            case '1m':
-                return new DatePeriod($this->getBeginDate($interval), new DateInterval('P1D'), 30);
-                break;
-            case '1y':
-                return new DatePeriod($this->getBeginDate($interval), new DateInterval('P1M'), 12);
-                break;
-        }
-
-        return new DatePeriod($this->getBeginDate($interval), new DateInterval('PT1H'), 24);
+        $datePeriod = static::$datePeriods[$interval];
+        return new DatePeriod(
+            $this->getBeginDate($interval),
+            new DateInterval($datePeriod[0]),
+            $datePeriod[1]
+        );
     }
 
     private function getBeginDate($interval)
