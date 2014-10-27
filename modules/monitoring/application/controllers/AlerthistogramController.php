@@ -83,21 +83,26 @@ class Monitoring_AlerthistogramController extends Controller
             }
         }
 
-        foreach ($this->backend->select()->from('eventHistory', array(
-                'object_type',
-                'host',
-                'service',
-                'timestamp',
-                'state',
-                'type',
-                'hostgroup',
-                'servicegroup'
-            ))
-                ->addFilter(new FilterOr(array(
-                    new FilterExpression('object_type', '=', 'host'),
-                    new FilterExpression('object_type', '=', 'service')
-                )))
-                ->addFilter(Filter::fromQueryString((string) $this->params))
+        $query = $this->backend->select()->from('eventHistory', array(
+            'object_type',
+            'host',
+            'service',
+            'timestamp',
+            'state',
+            'type',
+            'hostgroup',
+            'servicegroup'
+        ))->addFilter(new FilterOr(array(
+            new FilterExpression('object_type', '=', 'host'),
+            new FilterExpression('object_type', '=', 'service')
+        )));
+
+        $params = (string) $this->params;
+        if ($params !== '') {
+            $query->addFilter(Filter::fromQueryString($params));
+        }
+
+        foreach ($query
                 ->addFilter(new FilterExpression(
                     'timestamp', '>=',
                     $this->getBeginDate($interval)->getTimestamp()
