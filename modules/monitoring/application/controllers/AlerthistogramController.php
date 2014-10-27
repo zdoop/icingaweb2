@@ -105,7 +105,7 @@ class Monitoring_AlerthistogramController extends Controller
                 ->order('timestamp', 'ASC')
                 ->getQuery()
                 ->fetchAll() as $record) {
-            $type = ($record->service === null) ? 'host' : 'service';
+            $type = $record->object_type;
             ++$data[$type][
                 static::$states[$type][$record->state]
             ][
