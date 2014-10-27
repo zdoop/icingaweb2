@@ -69,6 +69,13 @@ class Monitoring_AlerthistogramController extends Controller
         '1y' => array('P1M',  12)
     );
 
+    protected static $beginDates = array(
+        '1d' => 'P1D',
+        '1w' => 'P1W',
+        '1m' => 'P1M',
+        '1y' => 'P1Y'
+    );
+
     protected $url;
 
     public function init()
@@ -215,23 +222,7 @@ class Monitoring_AlerthistogramController extends Controller
     private function getBeginDate($interval)
     {
         $new = new DateTime();
-
-        switch ($interval) {
-            case '1d':
-                return $new->sub(new DateInterval('P1D'));
-                break;
-            case '1w':
-                return $new->sub(new DateInterval('P1W'));
-                break;
-            case '1m':
-                return $new->sub(new DateInterval('P1M'));
-                break;
-            case '1y':
-                return $new->sub(new DateInterval('P1Y'));
-                break;
-        }
-
-        return null;
+        return $new->sub(new DateInterval(static::$beginDates[$interval]));
     }
 
     private function createIntervalBox()
