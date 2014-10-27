@@ -55,6 +55,13 @@ class Monitoring_AlerthistogramController extends Controller
         )
     );
 
+    protected static $periodFormats = array(
+        '1d' => '%H:00:00',
+        '1w' => '%Y-%m-%d',
+        '1m' => '%Y-%m-%d',
+        '1y' => '%Y-%m'
+    );
+
     protected $url;
 
     public function init()
@@ -185,24 +192,7 @@ class Monitoring_AlerthistogramController extends Controller
 
     private function getPeriodFormat($interval, $timestamp)
     {
-        $format = '';
-
-        switch ($interval) {
-            case '1d':
-                $format = '%H:00:00';
-                break;
-            case '1w':
-                $format = '%Y-%m-%d';
-                break;
-            case '1m':
-                $format = '%Y-%m-%d';
-                break;
-            case '1y':
-                $format = '%Y-%m';
-                break;
-        }
-
-        return strftime($format, $timestamp);
+        return strftime(static::$periodFormats[$interval], $timestamp);
     }
 
     private function createPeriod($interval)
