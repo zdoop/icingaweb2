@@ -84,6 +84,14 @@ class Monitoring_AlerthistogramController extends Controller
         'y' => 'P1Y'
     );
 
+    protected $units = array(
+        'd' => 'hour',
+        'w' => '6h',
+        'm' => 'day',
+        'q' => '3d',
+        'y' => 'week'
+    );
+
     protected $url;
 
     public function init()
