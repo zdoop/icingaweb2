@@ -76,6 +76,14 @@ class Monitoring_AlerthistogramController extends Controller
         '1y' => 'P1Y'
     );
 
+    protected $periods = array(
+        'd' => 'P1D',
+        'w' => 'P1W',
+        'm' => 'P1M',
+        'q' => 'P3M',
+        'y' => 'P1Y'
+    );
+
     protected $url;
 
     public function init()
