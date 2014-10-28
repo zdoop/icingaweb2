@@ -13,7 +13,7 @@ use Icinga\Web\Url;
 
 class Monitoring_AlerthistogramController extends Controller
 {
-    protected static $colors = array(
+    protected $colors = array(
         'host'      => array(
             'up'            => '#4b7',
             'down'          => '#f56',
@@ -27,7 +27,7 @@ class Monitoring_AlerthistogramController extends Controller
         )
     );
 
-    protected static $labels = array(
+    protected $labels = array(
         'host'      => array(
             'up'            => 'Recovery (Up)',
             'down'          => 'Down',
@@ -41,7 +41,7 @@ class Monitoring_AlerthistogramController extends Controller
         )
     );
 
-    protected static $states = array(
+    protected $states = array(
         'host'      => array(
             '0' => 'up',
             '1' => 'down',
@@ -55,21 +55,21 @@ class Monitoring_AlerthistogramController extends Controller
         )
     );
 
-    protected static $periodFormats = array(
+    protected $periodFormats = array(
         '1d' => '%H:00:00',
         '1w' => '%Y-%m-%d',
         '1m' => '%Y-%m-%d',
         '1y' => '%Y-%m'
     );
 
-    protected static $datePeriods = array(
+    protected $datePeriods = array(
         '1d' => array('PT1H', 24),
         '1w' => array('P1D',   7),
         '1m' => array('P1D',  30),
         '1y' => array('P1M',  12)
     );
 
-    protected static $beginDates = array(
+    protected $beginDates = array(
         '1d' => 'P1D',
         '1w' => 'P1W',
         '1m' => 'P1M',
@@ -86,7 +86,7 @@ class Monitoring_AlerthistogramController extends Controller
     public function indexAction()
     {
         $data = array();
-        foreach (static::$labels as $type => $labels) {
+        foreach ($this->labels as $type => $labels) {
             $data[$type] = array();
             foreach ($labels as $key => $value) {
                 $data[$type][$key] = array();
@@ -94,7 +94,7 @@ class Monitoring_AlerthistogramController extends Controller
         }
 
         $interval = $this->getParam('interval', '1d');
-        if (false === array_key_exists($interval, static::$periodFormats)) {
+        if (false === array_key_exists($interval, $this->periodFormats)) {
             throw new Zend_Controller_Action_Exception(sprintf(
                 $this->translate('Value \'%s\' for interval is not valid'),
                 $interval
@@ -141,7 +141,7 @@ class Monitoring_AlerthistogramController extends Controller
             ->fetchAll() as $record
         ) {
             $type = $record->object_type;
-            $state = static::$states[$type][$record->state];
+            $state = $this->states[$type][$record->state];
             $dateTime = $this->getPeriodFormat($interval, $record->timestamp);
             ++$data[$type][$state][$dateTime][1];
         }
@@ -173,8 +173,8 @@ class Monitoring_AlerthistogramController extends Controller
                 ->setAxisMin(null, 0);
             foreach ($stats as $stat => $value) {
                 $gridChart->drawLines(array(
-                    'label'         => static::$labels[$type][$stat],
-                    'color'         => static::$colors[$type][$stat],
+                    'label'         => $this->labels[$type][$stat],
+                    'color'         => $this->colors[$type][$stat],
                     'data'          => $value,
                     'showPoints'    => true
                 ));
@@ -206,12 +206,12 @@ class Monitoring_AlerthistogramController extends Controller
 
     private function getPeriodFormat($interval, $timestamp)
     {
-        return strftime(static::$periodFormats[$interval], $timestamp);
+        return strftime($this->periodFormats[$interval], $timestamp);
     }
 
     private function createPeriod($interval)
     {
-        $datePeriod = static::$datePeriods[$interval];
+        $datePeriod = $this->datePeriods[$interval];
         return new DatePeriod(
             $this->getBeginDate($interval),
             new DateInterval($datePeriod[0]),
@@ -222,7 +222,7 @@ class Monitoring_AlerthistogramController extends Controller
     private function getBeginDate($interval)
     {
         $new = new DateTime();
-        return $new->sub(new DateInterval(static::$beginDates[$interval]));
+        return $new->sub(new DateInterval($this->beginDates[$interval]));
     }
 
     private function createIntervalBox()
