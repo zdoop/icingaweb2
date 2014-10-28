@@ -17,7 +17,13 @@ class StateHistoryGroupedSummaryQuery extends IdoQuery
             'cnt_service_unknown'   => 'SUM(CASE WHEN sh.state = 3 AND o.objecttype_id = 2 THEN 1 ELSE 0 END)',
 
             'hour'                  => 'DATE_FORMAT(sh.state_time, \'%Y-%m-%dT%H\')',
+            '6h'                    => 'DATE_FORMAT('
+                . 'FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 21600 * 21600)'
+                . ', \'%Y-%m-%dT%H\')',
             'day'                   => 'DATE_FORMAT(sh.state_time, \'%Y-%m-%d\')',
+            '3d'                    => 'DATE_FORMAT('
+                . 'FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 259200 * 259200)'
+                . ', \'%Y-%m-%d\')',
             'week'                  => 'DATE_FORMAT(sh.state_time, \'%YW%v\')',
             'month'                 => 'DATE_FORMAT(sh.state_time, \'%Y-%m\')',
             'year'                  => 'DATE_FORMAT(sh.state_time, \'%Y\')',
