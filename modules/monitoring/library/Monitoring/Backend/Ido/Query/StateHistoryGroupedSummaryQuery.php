@@ -8,55 +8,35 @@ class StateHistoryGroupedSummaryQuery extends IdoQuery
 {
     protected $columnMap = array(
         'statehistory' => array(
-            'cnt_host_up'           => 'SUM(CASE WHEN sh.state = 0 AND o.objecttype_id = 1 THEN 1 ELSE 0 END)',
-            'cnt_host_down'         => 'SUM(CASE WHEN sh.state = 1 AND o.objecttype_id = 1 THEN 1 ELSE 0 END)',
-            'cnt_host_unreachable'  => 'SUM(CASE WHEN sh.state = 2 AND o.objecttype_id = 1 THEN 1 ELSE 0 END)',
-            'cnt_service_ok'        => 'SUM(CASE WHEN sh.state = 0 AND o.objecttype_id = 2 THEN 1 ELSE 0 END)',
-            'cnt_service_warning'   => 'SUM(CASE WHEN sh.state = 1 AND o.objecttype_id = 2 THEN 1 ELSE 0 END)',
-            'cnt_service_critical'  => 'SUM(CASE WHEN sh.state = 2 AND o.objecttype_id = 2 THEN 1 ELSE 0 END)',
-            'cnt_service_unknown'   => 'SUM(CASE WHEN sh.state = 3 AND o.objecttype_id = 2 THEN 1 ELSE 0 END)',
+            'cnt_host_up'           => 'SUM(CASE WHEN sh.state = 0 AND sho.objecttype_id = 1 THEN 1 ELSE 0 END)',
+            'cnt_host_down'         => 'SUM(CASE WHEN sh.state = 1 AND sho.objecttype_id = 1 THEN 1 ELSE 0 END)',
+            'cnt_host_unreachable'  => 'SUM(CASE WHEN sh.state = 2 AND sho.objecttype_id = 1 THEN 1 ELSE 0 END)',
+            'cnt_service_ok'        => 'SUM(CASE WHEN sh.state = 0 AND sho.objecttype_id = 2 THEN 1 ELSE 0 END)',
+            'cnt_service_warning'   => 'SUM(CASE WHEN sh.state = 1 AND sho.objecttype_id = 2 THEN 1 ELSE 0 END)',
+            'cnt_service_critical'  => 'SUM(CASE WHEN sh.state = 2 AND sho.objecttype_id = 2 THEN 1 ELSE 0 END)',
+            'cnt_service_unknown'   => 'SUM(CASE WHEN sh.state = 3 AND sho.objecttype_id = 2 THEN 1 ELSE 0 END)',
 
             'hour'                  => 'DATE_FORMAT(sh.state_time, \'%Y-%m-%dT%H\')',
-            '6h'                    => 'DATE_FORMAT('
-                . 'FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 21600 * 21600)'
-                . ', \'%Y-%m-%dT%H\')',
+            '6h'                    => 'DATE_FORMAT(
+FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 21600 * 21600)
+, \'%Y-%m-%dT%H\')',
             'day'                   => 'DATE_FORMAT(sh.state_time, \'%Y-%m-%d\')',
-            '3d'                    => 'DATE_FORMAT('
-                . 'FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 259200 * 259200)'
-                . ', \'%Y-%m-%d\')',
+            '3d'                    => 'DATE_FORMAT(
+FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 259200 * 259200)
+, \'%Y-%m-%d\')',
             'week'                  => 'DATE_FORMAT(sh.state_time, \'%YW%v\')',
             'month'                 => 'DATE_FORMAT(sh.state_time, \'%Y-%m\')',
             'year'                  => 'DATE_FORMAT(sh.state_time, \'%Y\')',
 
-            'cnt_events'            => 'COUNT(*)',
-            'objecttype_id'         => 'sho.objecttype_id',
-            'cnt_up'                => 'SUM(CASE WHEN sho.objecttype_id = 1 AND sh.state = 0 THEN 1 ELSE 0 END)',
-            'cnt_down_hard'         => 'SUM(CASE WHEN sho.objecttype_id = 1 AND sh.state = 1 AND state_type = 1 THEN 1 ELSE 0 END)',
-            'cnt_down'              => 'SUM(CASE WHEN sho.objecttype_id = 1 AND sh.state = 1 THEN 1 ELSE 0 END)',
-            'cnt_unreachable_hard'  => 'SUM(CASE WHEN sho.objecttype_id = 1 AND sh.state = 2 AND state_type = 1 THEN 1 ELSE 0 END)',
-            'cnt_unreachable'       => 'SUM(CASE WHEN sho.objecttype_id = 1 AND sh.state = 2 THEN 1 ELSE 0 END)',
-            'cnt_unknown_hard'      => 'SUM(CASE WHEN sho.objecttype_id = 2 AND sh.state = 3 AND state_type = 1 THEN 1 ELSE 0 END)',
-            'cnt_unknown'           => 'SUM(CASE WHEN sho.objecttype_id = 2 AND sh.state = 3 THEN 1 ELSE 0 END)',
-            'cnt_unknown_hard'      => 'SUM(CASE WHEN sho.objecttype_id = 2 AND sh.state = 3 AND state_type = 1 THEN 1 ELSE 0 END)',
-            'cnt_critical'          => 'SUM(CASE WHEN sho.objecttype_id = 2 AND sh.state = 2 THEN 1 ELSE 0 END)',
-            'cnt_critical_hard'     => 'SUM(CASE WHEN sho.objecttype_id = 2 AND sh.state = 2 AND state_type = 1 THEN 1 ELSE 0 END)',
-            'cnt_warning'           => 'SUM(CASE WHEN sho.objecttype_id = 2 AND sh.state = 1 THEN 1 ELSE 0 END)',
-            'cnt_warning_hard'      => 'SUM(CASE WHEN sho.objecttype_id = 2 AND sh.state = 1 AND state_type = 1 THEN 1 ELSE 0 END)',
-            'cnt_ok'                => 'SUM(CASE WHEN sho.objecttype_id = 2 AND sh.state = 0 THEN 1 ELSE 0 END)',
-            'host'                  => 'sho.name1 COLLATE latin1_general_ci',
-            'service'               => 'sho.name2 COLLATE latin1_general_ci',
-            'host_name'             => 'sho.name1 COLLATE latin1_general_ci',
-            'service_description'   => 'sho.name2 COLLATE latin1_general_ci',
-            'timestamp'             => 'UNIX_TIMESTAMP(sh.state_time)'
-        ),
-
+            'timestamp'             => 'sh.state_time'
+        )/*,
         'servicegroups' => array(
             'servicegroup' => 'sgo.name1'
         ),
 
         'hostgroups' => array(
             'hostgroup'  => 'hgo.name1'
-        )
+        )*/
     );
 
     protected function joinBaseTables()
@@ -68,11 +48,11 @@ class StateHistoryGroupedSummaryQuery extends IdoQuery
             array('sho' => $this->prefix . 'objects'),
             'sh.object_id = sho.object_id AND sho.is_active = 1',
             array()
-        )
-        ->group('DATE(sh.state_time)');
+        )/*
+        ->group('DATE(sh.state_time)')*/;
         $this->joinedVirtualTables = array('statehistory' => true);
     }
-
+/*
     protected function joinHostgroups()
     {
         $this->select->join(
@@ -106,4 +86,5 @@ class StateHistoryGroupedSummaryQuery extends IdoQuery
             array()
         );
     }
+*/
 }
