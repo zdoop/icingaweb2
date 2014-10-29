@@ -10,70 +10,24 @@ use Icinga\Module\Monitoring\Chart\HistogramGridChart;
 use Icinga\Module\Monitoring\Controller;
 use Icinga\Module\Monitoring\Web\Widget\SelectBox;
 use Icinga\Web\Url;
+use Icinga\Module\Monitoring\Object\Host;
+use Icinga\Module\Monitoring\Object\Service;
 
 class Monitoring_AlerthistogramController extends Controller
 {
     protected $colors = array(
-        'host'      => array(
-            'up'            => '#4b7',
-            'down'          => '#f56',
-            'unreachable'   => '#a4f'
-        ),
-        'service'   => array(
-            'ok'        => '#4b7',
-            'warning'   => '#fa4',
-            'critical'  => '#f56',
-            'unknown'   => '#a4f'
-        )
+        'host'    => array(1207, 3926, 2639),
+        'service' => array(1207, 4004, 3926, 2639)
     );
 
-    protected $labels = array(
-        'host'      => array(
-            'up'            => 'Recovery (Up)',
-            'down'          => 'Down',
-            'unreachable'   => 'Unreachable'
-        ),
-        'service'   => array(
-            'ok'        => 'OK',
-            'warning'   => 'WARNING',
-            'critical'  => 'CRITICAL',
-            'unknown'   => 'UNKNOWN'
-        )
-    );
-
-    protected $states = array(
-        'host'      => array(
-            '0' => 'up',
-            '1' => 'down',
-            '2' => 'unreachable'
-        ),
-        'service'   => array(
-            '0' => 'ok',
-            '1' => 'warning',
-            '2' => 'critical',
-            '3' => 'unknown'
-        )
-    );
-
-    protected $periodFormats = array(
-        '1d' => '%H:00:00',
-        '1w' => '%Y-%m-%d',
-        '1m' => '%Y-%m-%d',
-        '1y' => '%Y-%m'
-    );
-
-    protected $datePeriods = array(
-        '1d' => array('PT1H', 24),
-        '1w' => array('P1D',   7),
-        '1m' => array('P1D',  30),
-        '1y' => array('P1M',  12)
-    );
-
-    protected $beginDates = array(
-        '1d' => 'P1D',
-        '1w' => 'P1W',
-        '1m' => 'P1M',
-        '1y' => 'P1Y'
+    protected $dateTimeFormats = array(
+        'hour'  => 'Y-m-d\\TH',
+        '6h'    => 'Y-m-d\\TH',
+        'day'   => 'Y-m-d',
+        '3d'    => 'Y-m-d',
+        'week'  => 'Y\\WW',
+        'month' => 'Y-m',
+        'year'  => 'Y'
     );
 
     protected $periods = array(
@@ -81,7 +35,14 @@ class Monitoring_AlerthistogramController extends Controller
         'w' => 'P1W',
         'm' => 'P1M',
         'q' => 'P3M',
-        'y' => 'P1Y'
+        'y' => 'P1Y',
+
+        'hour'  => 'PT1H',
+        '6h'    => 'PT6H',
+        'day'   => 'P1D',
+        '3d'    => 'P3D',
+        'week'  => 'P1W',
+        'month' => 'P1M'
     );
 
     protected $units = array(
@@ -101,73 +62,124 @@ class Monitoring_AlerthistogramController extends Controller
 
     public function indexAction()
     {
-        $data = array();
-        foreach ($this->labels as $type => $labels) {
-            $data[$type] = array();
-            foreach ($labels as $key => $value) {
-                $data[$type][$key] = array();
-            }
+        $params = array(
+            'period' => null,
+            'end'    => date(DateTime::ISO8601)
+        );
+        foreach ($params as $param => $default) {
+            $params[$param] = $this->getParam($param, $default);
+            $this->params->remove($param);
         }
 
-        $interval = $this->getParam('interval', '1d');
-        if (false === array_key_exists($interval, $this->periodFormats)) {
+        if (false === (
+            $params['period'] === null ||
+            array_key_exists($params['period'], $this->units)
+        )) {
             throw new Zend_Controller_Action_Exception(sprintf(
-                $this->translate('Value \'%s\' for interval is not valid'),
-                $interval
+                $this->translate('Value \'%s\' for period is not valid'),
+                $params['period']
             ));
         }
-        $this->params->remove('interval');
 
-        foreach ($this->createPeriod($interval) as $entry) {
-            $index = $this->getPeriodFormat($interval, $entry->getTimestamp());
-            foreach ($data as $type => $stats) {
-                foreach ($stats as $stat => $value) {
-                    $data[$type][$stat][$index] = array($index, 0);
-                }
+        $start = null;
+        $unit = 'month';
+        $dateTimeFormat = $this->dateTimeFormats[$unit];
+        if ($params['period'] !== null) {
+            $unit = $this->units[$params['period']];
+            $dateTimeFormat = $this->dateTimeFormats[$unit];
+            $end = new DateTime($params['end']);
+            $start = $end->sub(new DateInterval(
+                $this->periods[$params['period']]
+            ))->format($dateTimeFormat);
+        }
+
+        $data = array();
+        foreach (array(
+            'host'    => array(0, 1, 2),
+            'service' => array(0, 1, 2, 3)
+        ) as $type => $stats) {
+            $data[$type] = array();
+            foreach ($stats as $stat) {
+                $data[$type][$stat] = array();
             }
         }
 
-        $query = $this->backend->select()->from('eventHistory', array(
-            'object_type',
-            'host',
-            'service',
-            'timestamp',
-            'state',
-            'type',
-            'hostgroup',
-            'servicegroup'
-        ))->addFilter(new FilterOr(array(
-            new FilterExpression('object_type', '=', 'host'),
-            new FilterExpression('object_type', '=', 'service')
-        )));
+        $query = $this->backend->select()->from(
+            'stateHistoryGroupedSummary',
+            array(
+                'timestamp' => $unit,
+                'cnt_host_up',
+                'cnt_host_down',
+                'cnt_host_unreachable',
+                'cnt_service_ok',
+                'cnt_service_warning',
+                'cnt_service_critical',
+                'cnt_service_unknown'
+            )
+        );
 
         $params = (string) $this->params;
         if ($params !== '') {
             $query->addFilter(Filter::fromQueryString($params));
         }
 
+        if ($start !== null) {
+            $query->addFilter(new FilterExpression($unit, '>=', $start));
+        }
+
+        $first = null;
+        $last = null;
+
         foreach (
-            $query->addFilter(new FilterExpression(
-                'timestamp',
-                '>=',
-                $this->getBeginDate($interval)->getTimestamp()
-            ))
-            ->order('timestamp', 'ASC')
+            $query
+            ->order($unit, 'ASC')
             ->getQuery()
+            ->group('timestamp')
             ->fetchAll() as $record
         ) {
-            $type = $record->object_type;
-            $state = $this->states[$type][$record->state];
-            $dateTime = $this->getPeriodFormat($interval, $record->timestamp);
-            ++$data[$type][$state][$dateTime][1];
+            if ($first === null) {
+                $first = $record->timestamp;
+            }
+            $last = $record->timestamp;
+
+            foreach ($data as $type => $stats) {
+                foreach ($stats as $stat) {
+                    $data[$type][(int) $stat][$record->timestamp] = array(
+                        $record->timestamp,
+                        (int) $record->{sprintf(
+                            'cnt_%s_%s',
+                            $type,
+                            $this->getStateText($type, $stat)
+                        )}
+                    );
+                }
+            }
         }
 
         $this->view->charts = array();
 
+        if ($first === null) {
+            return $this;
+        }
+
+        $interval = new DateInterval($this->periods[$unit]);
+        for ($current = $first; $current <= $last;) {
+            foreach ($data as $type => $stats) {
+                foreach ($stats as $stat => $timestamps) {
+                    if (false === array_key_exists($current, $timestamps)) {
+                        $data[$type][$stat][$current] = array($current, 0);
+                    }
+                }
+            }
+            $current = DateTime::createFromFormat($dateTimeFormat, $current);
+            $current->add($interval);
+            $current = $current->format($dateTimeFormat);
+        }
+
         foreach ($data as $type => $stats) {
-            foreach ($stats as $stat => $values) {
+            foreach ($stats as $stat => $timestamps) {
                 $keepStat = false;
-                foreach ($values as $value) {
+                foreach ($timestamps as $value) {
                     if ($value[1] !== 0) {
                         $keepStat = true;
                     }
@@ -176,6 +188,7 @@ class Monitoring_AlerthistogramController extends Controller
                     unset($data[$type][$stat]);
                 }
             }
+
             if (empty($data[$type])) {
                 unset($data[$type]);
                 continue;
@@ -187,20 +200,36 @@ class Monitoring_AlerthistogramController extends Controller
                 ->setAxisLabel('Date', 'Events')
                 ->setXAxis(new StaticAxis())
                 ->setAxisMin(null, 0);
-            foreach ($stats as $stat => $value) {
+
+            foreach ($stats as $stat => $timestamps) {
+                ksort($timestamps);
+
                 $gridChart->drawLines(array(
-                    'label'         => $this->labels[$type][$stat],
-                    'color'         => $this->colors[$type][$stat],
-                    'data'          => $value,
+                    'label'         => $this->getStateText($type, $stat, true),
+                    'color'         => sprintf('#%03x', $this->colors[$type][$stat]),
+                    'data'          => $timestamps,
                     'showPoints'    => true
                 ));
             }
+
             $this->view->charts[$type] = $gridChart;
         }
 
         $this->addTitleTab('alerthistogram', $this->translate('Alert Histogram'));
 
-        $this->view->intervalBox = $this->createIntervalBox();
+        $box = $this->view->intervalBox = new SelectBox(
+            'intervalBox',
+            array(
+                'd' => t('Last day'),
+                'w' => t('Last week'),
+                'm' => t('Last month'),
+                'q' => t('Last Quarter'),
+                'y' => t('Last year')
+            ),
+            t('Report period'),
+            'period'
+        );
+        $box->applyRequest($this->getRequest());
 
         return $this;
     }
@@ -220,41 +249,12 @@ class Monitoring_AlerthistogramController extends Controller
         $this->view->title = $title;
     }
 
-    private function getPeriodFormat($interval, $timestamp)
-    {
-        return strftime($this->periodFormats[$interval], $timestamp);
-    }
-
-    private function createPeriod($interval)
-    {
-        $datePeriod = $this->datePeriods[$interval];
-        return new DatePeriod(
-            $this->getBeginDate($interval),
-            new DateInterval($datePeriod[0]),
-            $datePeriod[1]
-        );
-    }
-
-    private function getBeginDate($interval)
-    {
-        $new = new DateTime();
-        return $new->sub(new DateInterval($this->beginDates[$interval]));
-    }
-
-    private function createIntervalBox()
-    {
-        $box = new SelectBox(
-            'intervalBox',
-            array(
-                '1d' => t('One day'),
-                '1w' => t('One week'),
-                '1m' => t('One month'),
-                '1y' => t('One year')
-            ),
-            t('Report interval'),
-            'interval'
-        );
-        $box->applyRequest($this->getRequest());
-        return $box;
+    private function getStateText($type, $state, $translate = false) {
+        switch ($type) {
+            case 'host':
+                return Host::getStateText($state, $translate);
+            case 'service':
+                return Service::getStateText($state, $translate);
+        }
     }
 }
