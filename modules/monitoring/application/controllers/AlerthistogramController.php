@@ -220,13 +220,13 @@ class Monitoring_AlerthistogramController extends Controller
         $box = $this->view->intervalBox = new SelectBox(
             'intervalBox',
             array(
-                'd' => t('Last day'),
-                'w' => t('Last week'),
-                'm' => t('Last month'),
-                'q' => t('Last Quarter'),
-                'y' => t('Last year')
+                'd' => $this->translate('Last day'),
+                'w' => $this->translate('Last week'),
+                'm' => $this->translate('Last month'),
+                'q' => $this->translate('Last Quarter'),
+                'y' => $this->translate('Last year')
             ),
-            t('Report period'),
+            $this->translate('Report period'),
             'period'
         );
         $box->applyRequest($this->getRequest());
