@@ -28,7 +28,9 @@ class StateHistoryGroupedSummary extends DataView
             '3d',
             'week',
             'month',
-            'year'
+            'year',
+
+            'unix_timestamp'
         );
     }
 

@@ -26,7 +26,9 @@ FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 259200 * 259200)
 , \'%Y-%m-%d\')',
             'week'                  => 'DATE_FORMAT(sh.state_time, \'%YW%v\')',
             'month'                 => 'DATE_FORMAT(sh.state_time, \'%Y-%m\')',
-            'year'                  => 'DATE_FORMAT(sh.state_time, \'%Y\')'
+            'year'                  => 'DATE_FORMAT(sh.state_time, \'%Y\')',
+
+            'unix_timestamp'        => 'UNIX_TIMESTAMP(sh.state_time)'
         )/*,
         'servicegroups' => array(
             'servicegroup' => 'sgo.name1'
