@@ -156,6 +156,22 @@ class Monitoring_AlerthistogramController extends Controller
             }
         }
 
+        $this->addTitleTab('alerthistogram', $this->translate('Alert Histogram'));
+
+        $box = $this->view->intervalBox = new SelectBox(
+            'intervalBox',
+            array(
+                'd' => $this->translate('Last day'),
+                'w' => $this->translate('Last week'),
+                'm' => $this->translate('Last month'),
+                'q' => $this->translate('Last Quarter'),
+                'y' => $this->translate('Last year')
+            ),
+            $this->translate('Report period'),
+            'period'
+        );
+        $box->applyRequest($this->getRequest());
+
         $this->view->charts = array();
 
         if ($first === null) {
@@ -214,22 +230,6 @@ class Monitoring_AlerthistogramController extends Controller
 
             $this->view->charts[$type] = $gridChart;
         }
-
-        $this->addTitleTab('alerthistogram', $this->translate('Alert Histogram'));
-
-        $box = $this->view->intervalBox = new SelectBox(
-            'intervalBox',
-            array(
-                'd' => $this->translate('Last day'),
-                'w' => $this->translate('Last week'),
-                'm' => $this->translate('Last month'),
-                'q' => $this->translate('Last Quarter'),
-                'y' => $this->translate('Last year')
-            ),
-            $this->translate('Report period'),
-            'period'
-        );
-        $box->applyRequest($this->getRequest());
 
         return $this;
     }
