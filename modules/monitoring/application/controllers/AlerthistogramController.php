@@ -81,17 +81,15 @@ class Monitoring_AlerthistogramController extends Controller
             ));
         }
 
-        $start = null;
-        $unit = 'month';
-        $dateTimeFormat = $this->dateTimeFormats[$unit];
-        if ($params['period'] !== null) {
-            $unit = $this->units[$params['period']];
-            $dateTimeFormat = $this->dateTimeFormats[$unit];
-            $end = new DateTime($params['end']);
-            $start = $end->sub(new DateInterval(
+        $endDT = new DateTime($params['end']);
+        $end = $endDT->getTimestamp();
+        $unit = $this->units[$params['period']] ?: 'month';
+        $start = ($params['period'] === null)
+            ? null
+            : $endDT->sub(new DateInterval(
                 $this->periods[$params['period']]
-            ))->format($dateTimeFormat);
-        }
+            ))->getTimestamp();
+        $dateTimeFormat = $this->dateTimeFormats[$unit];
 
         $data = array();
         foreach (array(
@@ -124,8 +122,9 @@ class Monitoring_AlerthistogramController extends Controller
         }
 
         if ($start !== null) {
-            $query->addFilter(new FilterExpression($unit, '>=', $start));
+            $query->addFilter(new FilterExpression('unix_timestamp', '>=', $start));
         }
+        $query->addFilter(new FilterExpression('unix_timestamp', '<', $end));
 
         $first = null;
         $last = null;
