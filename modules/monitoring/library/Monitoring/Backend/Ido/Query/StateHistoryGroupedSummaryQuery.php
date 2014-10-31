@@ -24,7 +24,7 @@ FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 21600 * 21600)
             '3d'                    => 'DATE_FORMAT(
 FROM_UNIXTIME(UNIX_TIMESTAMP(sh.state_time) DIV 259200 * 259200)
 , \'%Y-%m-%d\')',
-            'week'                  => 'DATE_FORMAT(sh.state_time, \'%YW%v\')',
+            'week'                  => 'DATE_FORMAT(sh.state_time, \'%YW%u\')',
             'month'                 => 'DATE_FORMAT(sh.state_time, \'%Y-%m\')',
             'year'                  => 'DATE_FORMAT(sh.state_time, \'%Y\')',
 
