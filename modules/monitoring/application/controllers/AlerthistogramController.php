@@ -187,8 +187,10 @@ class Monitoring_AlerthistogramController extends Controller
             return $this;
         }
 
+        $currentDT = $this->createFromFormat($first, $unit);
         $interval = new DateInterval($this->periods[$unit]);
-        for ($current = $first; $current <= $last;) {
+        $current = $currentDT->format($dateTimeFormat);
+        do {
             foreach ($data as $type => $stats) {
                 foreach ($stats as $stat => $timestamps) {
                     if (false === array_key_exists($current, $timestamps)) {
@@ -196,10 +198,9 @@ class Monitoring_AlerthistogramController extends Controller
                     }
                 }
             }
-            $current = DateTime::createFromFormat($dateTimeFormat, $current);
-            $current->add($interval);
-            $current = $current->format($dateTimeFormat);
-        }
+            $currentDT->add($interval);
+            $current = $currentDT->format($dateTimeFormat);
+        } while ($current <= $last);
 
         foreach ($data as $type => $stats) {
             foreach ($stats as $stat => $timestamps) {
