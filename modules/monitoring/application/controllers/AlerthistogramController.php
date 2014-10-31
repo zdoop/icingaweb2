@@ -30,6 +30,16 @@ class Monitoring_AlerthistogramController extends Controller
         'year'  => 'Y'
     );
 
+    protected $dateTimeRegex = array(
+        'hour'  => '(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})T(?P<hour>[0-9]{2})',
+        '6h'    => '(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})T(?P<hour>[0-9]{2})',
+        'day'   => '(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})',
+        '3d'    => '(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2})',
+        'week'  => '(?P<year>[0-9]{4})W(?P<week>[0-9]{2})',
+        'month' => '(?P<year>[0-9]{4})-(?P<month>[0-9]{2})',
+        'year'  => '(?P<year>[0-9]{4})'
+    );
+
     protected $periods = array(
         'd' => 'P1D',
         'w' => 'P1W',
