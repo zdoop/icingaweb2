@@ -266,4 +266,47 @@ class Monitoring_AlerthistogramController extends Controller
                 return Service::getStateText($state, $translate);
         }
     }
+
+    private function createFromFormat($subject, $unit)
+    {
+        $matches = array();
+        if (preg_match(
+            '#^' . $this->dateTimeRegex[$unit] . '$#',
+            $subject,
+            $matches)
+        ) {
+            foreach ($matches as $key => $value) {
+                if (is_int($key)) {
+                    unset($matches[$key]);
+                } else {
+                    $matches[$key] = (int) $value;
+                }
+            }
+            $DT = new DateTime();
+            if ($unit === 'week') {
+                return $DT->setISODate(
+                    $matches['year'],
+                    $matches['week']
+                )->setTime(0, 0);
+            }
+            foreach (array(
+                array('hour', 'minute'),
+                array('month', 'day')
+            ) as $default => $keys) {
+                foreach ($keys as $key) {
+                    if (false === array_key_exists($key, $matches)) {
+                        $matches[$key] = $default;
+                    }
+                }
+            }
+            return $DT->setDate(
+                $matches['year'],
+                $matches['month'],
+                $matches['day']
+            )->setTime(
+                $matches['hour'],
+                $matches['minute']
+            );
+        }
+    }
 }
