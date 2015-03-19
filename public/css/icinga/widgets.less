@@ -48,6 +48,20 @@ table.multiselect tr[href] td {
   -ms-user-select: none;
 }
 
+table.multiselect .multiselect-info {
+  display: none;
+}
+
+table.multiselect tr.focussed {
+  background-color: #fffceb;
+}
+
+table.multiselect tr.focussed .multiselect-info {
+  .info-box;
+  display: inline;
+  padding: 0.1em;
+}
+
 #main form.filterEditor input[type=text], #main form.filterEditor select {
     width: 12em;
 }

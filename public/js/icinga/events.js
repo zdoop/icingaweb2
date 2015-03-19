@@ -118,6 +118,10 @@
             // Select a table row
             $(document).on('click', 'table.multiselect tr[href]', { self: this }, this.rowSelected);
 
+            $(document).on('keydown', 'table.multiselect tr[href]', { self: this }, this.rowKeypress);
+            $(document).on('focusin', 'table.multiselect tr[href]', { self: this }, this.rowFocus);
+            $(document).on('focusout', 'table.multiselect tr[href]', { self: this }, this.rowFocusOut);
+
             // We catch all form submit events
             $(document).on('submit', 'form', { self: this }, this.submitForm);
 
@@ -298,6 +302,55 @@
             return false;
         },
 
+        rowKeypress: function(event) {
+            var url = $(this).closest('table.multiselect').data('icinga-multiselect-url');
+            var self = event.data.self;
+            var $firstA = $(this).find('a[href]').first();
+            var rowTargetFocused = $firstA.is(':focus');
+
+            switch (event.which) {
+                case 32:
+                    // space
+                    if (rowTargetFocused) {
+                        self.icinga.events.rowSelected.apply(this, [event]);
+                    }
+                    return false;
+
+                /*
+                case 38:
+                    // up
+                    var next = $(this).prev('tr').find('a[href]').first();
+                    return false;
+
+                case 40:
+                    // down
+                    var next = $(this).next('tr').find('a[href]').first();
+                    return false;
+                */
+
+                default:
+                    console.log(event.which);
+                    return true;
+            }
+            // return false;
+        },
+
+        rowFocus: function(evt) {
+            $(this).closest('table').find('.focussed').removeClass('focussed');
+
+            var $tr = $(this).closest('tr');
+            if (
+                ! $tr.hasClass('active') &&
+                ! $tr.is(':hover') &&
+                  $(this).find('a[href]').first()[0] === evt.target) {
+                $(this).addClass('focussed');
+            }
+        },
+
+        rowFocusOut: function() {
+            $(this).closest('table').find('.focussed').removeClass('focussed');
+        },
+
         /**
          * Handle table selection.
          */
@@ -322,7 +375,7 @@
             }
 
             // update selection
-            if (event.ctrlKey || event.metaKey) {
+            if (event.ctrlKey || event.metaKey || event.which === 32) {
                 icinga.ui.toogleTableRowSelection($tr);
                 // multi selection
             } else if (event.shiftKey) {

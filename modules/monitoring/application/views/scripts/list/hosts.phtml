@@ -130,7 +130,8 @@ if ($hosts->count() === 0) {
           )
         ) ?>)</span>
         <?php endif ?>
-        <p class="pluginoutput"><?= $this->escape($this->ellipsis($host->host_output, 10000)) ?></p>
+       <span class="multiselect-info"> <?= $this->translate('space to toggle selection') ?> </span>
+       <p class="pluginoutput"><?= $this->escape($this->ellipsis($host->host_output, 10000)) ?></p>
       </td>
       <?php foreach($this->extraColumns as $col): ?>
       <td><?= $this->escape($host->$col) ?></td>

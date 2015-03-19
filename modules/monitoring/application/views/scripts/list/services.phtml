@@ -118,7 +118,9 @@ foreach ($services as $service):
           $hostLink,
           null,
           array('title' => sprintf($this->translate('Show detailed information for host %s'), $service->host_display_name))
-        ); ?><?php endif ?><br>
+        ); ?><?php endif ?>
+          <span class="multiselect-info"> <?= $this->translate('space to toggle selection') ?> </span>
+          <br>
         <p class="pluginoutput"><?= $this->escape($this->ellipsis($service->service_output, 10000)); ?></p>
       </td>
 <?php foreach($this->extraColumns as $col): ?>
