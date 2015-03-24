@@ -339,9 +339,7 @@
             $(this).closest('table').find('.focussed').removeClass('focussed');
 
             var $tr = $(this).closest('tr');
-            if (
-                ! $tr.hasClass('active') &&
-                ! $tr.is(':hover') &&
+            if (! $tr.is(':hover') &&
                   $(this).find('a[href]').first()[0] === evt.target) {
                 $(this).addClass('focussed');
             }

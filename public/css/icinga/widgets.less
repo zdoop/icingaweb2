@@ -48,7 +48,7 @@ table.multiselect tr[href] td {
   -ms-user-select: none;
 }
 
-table.multiselect .multiselect-info {
+.multiselect-info, .multiselect-info-active {
   display: none;
 }
 
@@ -56,10 +56,30 @@ table.multiselect tr.focussed {
   background-color: #fffceb;
 }
 
-table.multiselect tr.focussed .multiselect-info {
+.multiselect-infobox {
   .info-box;
   display: inline;
-  padding: 0.1em;
+  position: relative;
+  top: -0.2em;
+  padding: 0em;
+  padding-left: 0.2em;
+  padding-right: 0.2em;
+  margin-left: -4em;
+  margin-bottom: -0.5em;
+  margin-right: 0.3em;
+  float:right;
+}
+
+table.multiselect tr.focussed .multiselect-info {
+  .multiselect-infobox;
+}
+
+table.multiselect tr.focussed.active .multiselect-info {
+  display: none;
+}
+table.multiselect tr.focussed.active .multiselect-info-active {
+  .multiselect-infobox;
+  background-color: #fcfa9b;
 }
 
 #main form.filterEditor input[type=text], #main form.filterEditor select {
