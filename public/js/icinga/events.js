@@ -316,23 +316,19 @@
                     }
                     return false;
 
-                /*
                 case 38:
                     // up
-                    var next = $(this).prev('tr').find('a[href]').first();
+                    $(this).prev('tr').find('a[href]').first().focus();
                     return false;
 
                 case 40:
                     // down
-                    var next = $(this).next('tr').find('a[href]').first();
+                    $(this).next('tr').find('a[href]').first().focus();
                     return false;
-                */
 
                 default:
-                    console.log(event.which);
                     return true;
             }
-            // return false;
         },
 
         rowFocus: function(evt) {
