@@ -17,8 +17,40 @@
         this.on('mouseenter', '#menu > nav > ul > li', this.menuTitleHovered, this);
         this.on('mouseleave', '#sidebar', this.leaveSidebar, this);
         this.on('rendered', this.onRendered);
+
+        // show dropdown content when tabbing through the menu to support keyboard navigation
+        this.on('focusin', 'ul.tabs > li.dropdown a.dropdown-toggle', this.dropdownFocus, this);
+        this.on('focusout', 'ul.tabs > li.dropdown a.dropdown-toggle', this.dropdownFocusOut, this);
+
+        // hide the dropdown content when tabbing away from the last list element
+        this.on('focusin', 'ul.tabs li.hover ul.dropdown-menu li', this.dropdownItemFocusOut, this);
     };
     Navigation.prototype = new Icinga.EventListener();
+
+    Navigation.prototype.dropdownFocus = function() {
+        $(this).closest('li').addClass('hover');
+    };
+
+    Navigation.prototype.dropdownFocusOut = function(evt) {
+        if (!evt.relatedTarget || ! $( evt.relatedTarget).closest('ul.dropdown-menu').length) {
+
+            // Prevent the dropdown from staying open forever when tabbing backwards
+            setTimeout(function() {
+                $('li.hover').removeClass('hover');
+            }, 500);
+        }
+    };
+
+    Navigation.prototype.dropdownItemFocusOut = function() {
+        if (! $(this).next('li').length) {
+
+            // Set a long timeout, to prevent removing the hover from
+            // interrupting the current tab path and resetting the focus to the first element.
+            setTimeout(function() {
+                $('li.hover').removeClass('hover');
+            }, 500);
+        }
+    };
 
     Navigation.prototype.onRendered = function(evt) {
         // get original source element of the rendered-event
