@@ -6,6 +6,10 @@
 
     var activeMenuId;
 
+    var activeHoverTimeout;
+    var activeHoverItem;
+    var activeHoverMenu;
+
     Icinga.Behaviors = Icinga.Behaviors || {};
 
     var Navigation = function (icinga) {
@@ -20,10 +24,11 @@
 
         // show dropdown content when tabbing through the menu to support keyboard navigation
         this.on('focusin', 'ul.tabs > li.dropdown a.dropdown-toggle', this.dropdownFocus, this);
-        this.on('focusout', 'ul.tabs > li.dropdown a.dropdown-toggle', this.dropdownFocusOut, this);
 
-        // hide the dropdown content when tabbing away from the last list element
-        this.on('focusin', 'ul.tabs li.hover ul.dropdown-menu li', this.dropdownItemFocusOut, this);
+        // hide the dropdown content when tabbing away from a list element, to ensure
+        // that it always closes when no longer focused
+        this.on('focusout', 'ul.tabs li.hover ul.dropdown-menu li', this.dropdownFocusOut, this);
+        this.on('focusout', 'ul.tabs > li.dropdown a.dropdown-toggle', this.dropdownFocusOut, this);
     };
     Navigation.prototype = new Icinga.EventListener();
 
@@ -32,23 +37,18 @@
     };
 
     Navigation.prototype.dropdownFocusOut = function(evt) {
-        if (!evt.relatedTarget || ! $( evt.relatedTarget).closest('ul.dropdown-menu').length) {
+        var self = this;
+        if (! evt.relatedTarget || ! $(evt.relatedTarget).closest('ul.dropdown-menu').length) {
 
-            // Prevent the dropdown from staying open forever when tabbing backwards
-            setTimeout(function() {
-                $('li.hover').removeClass('hover');
+            // Close the toolbar after a small timeout to not interrupt the focus transition that
+            // is currently going on
+            activeHoverTimeout = setTimeout(function() {
+                activeHoverItem = null;
+                $(self).closest('li.hover').removeClass('hover');
             }, 500);
-        }
-    };
-
-    Navigation.prototype.dropdownItemFocusOut = function() {
-        if (! $(this).next('li').length) {
-
-            // Set a long timeout, to prevent removing the hover from
-            // interrupting the current tab path and resetting the focus to the first element.
-            setTimeout(function() {
-                $('li.hover').removeClass('hover');
-            }, 500);
+        } else {
+            activeHoverItem = icinga.utils.getDomPath(evt.relatedTarget);
+            activeHoverMenu = icinga.utils.getDomPath($(self).closest('li.hover')[0]);
         }
     };
 
@@ -81,6 +81,15 @@
                     activeMenuId = this.id;
                 });
             }
+        }
+
+        if (activeHoverItem && activeHoverMenu) {
+            $(icinga.utils.getElementByDomPath(activeHoverItem)).focus();
+            $(icinga.utils.getElementByDomPath(activeHoverMenu)).addClass('hover');
+        }
+        if (activeHoverTimeout) {
+            clearTimeout(activeHoverTimeout);
+            activeHoverTimeout = 0;
         }
     };
 
