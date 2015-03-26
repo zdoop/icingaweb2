@@ -616,6 +616,10 @@
             $(document).off('change', 'form input.autosubmit', this.submitForm);
             $(document).off('focus', 'form select[data-related-radiobtn]', this.autoCheckRadioButton);
             $(document).off('focus', 'form input[data-related-radiobtn]', this.autoCheckRadioButton);
+
+            $(document).off('keydown', 'table.multiselect tr[href]', this.rowKeypress);
+            $(document).off('focusin', 'table.multiselect tr[href]', this.rowFocus);
+            $(document).off('focusout', 'table.multiselect tr[href]', this.rowFocusOut);
         },
 
         destroy: function() {
