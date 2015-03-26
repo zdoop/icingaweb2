@@ -1,7 +1,7 @@
 /*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
 
 /**
- * EventListener contains event handlers and can bind / and unbind them from
+ * EventListener contain event handlers and can bind / and unbind them from
  * event emitting objects
  */
 (function(Icinga, $) {
@@ -14,12 +14,12 @@
     };
 
     /**
-     * Add an handler to this EventLister
+     * Add a handler to this EventLister
      *
      * @param evt   {String}    The name of the triggering event
      * @param cond  {String}    The filter condition
      * @param fn    {Function}  The event handler to execute
-     * @param scope {Object}    The optional 'this' of the called function
+     * @param scope {Object}    The optional scope (this) of the called function
      */
     EventListener.prototype.on = function(evt, cond, fn, scope) {
         if (typeof cond === 'function') {
