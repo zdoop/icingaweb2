@@ -4,6 +4,7 @@
 namespace Icinga\Web\Widget;
 
 use Icinga\Exception\ProgrammingError;
+use Icinga\Util\Translator;
 use Icinga\Web\Url;
 use Icinga\Web\Widget\Tabextension\Tabextension;
 use Icinga\Application\Icinga;
@@ -35,7 +36,7 @@ EOT;
      */
     private $dropdownTpl = <<< 'EOT'
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle"><i aria-hidden="true" class="icon-down-open"></i></a>
+  <a aria-label="{ARIA-LABEL}" href="#" class="dropdown-toggle"><i aria-hidden="true" class="icon-down-open"></i></a>
   <ul class="dropdown-menu">
     {TABS}
   </ul>
@@ -100,6 +101,11 @@ EOT;
      * @var bool
      */
     private $closeTab = true;
+
+    /**
+     * @var string
+     */
+    private $dropdownLinkAriaLabel;
 
     /**
      * Set whether the current tab is closable
@@ -366,13 +372,15 @@ EOT;
                 '{TABS}',
                 '{DROPDOWN}',
                 '{REFRESH}',
-                '{CLOSE}'
+                '{CLOSE}',
+                '{ARIA-LABEL}'
             ),
             array(
                 $tabs,
                 $drop,
                 $close,
-                $refresh
+                $refresh,
+                mt(Translator::DEFAULT_DOMAIN, 'Available actions menu.')
             ),
             $this->baseTpl
         );
