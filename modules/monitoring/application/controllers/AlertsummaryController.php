@@ -102,7 +102,7 @@ class Monitoring_AlertsummaryController extends Controller
 
         $query->order('notification_start_time', 'asc');
 
-        $records    = $query->getQuery()->fetchAll();
+        $records    = $query->getQuery()->getSelectQuery()->query();
         $data       = array();
         $period     = $this->createPeriod($interval);
 
@@ -150,7 +150,7 @@ class Monitoring_AlertsummaryController extends Controller
 
         $query->order('notification_start_time', 'asc');
 
-        $records = $query->getQuery()->fetchAll();
+        $records = $query->getQuery()->getSelectQuery()->query();
         $slots = array();
 
         $period = new DatePeriod($beginDate, new DateInterval('P1D'), 2, DatePeriod::EXCLUDE_START_DATE);
@@ -217,7 +217,7 @@ class Monitoring_AlertsummaryController extends Controller
 
         $query->order('notification_start_time', 'desc');
 
-        $records = $query->getQuery()->fetchAll();
+        $records = $query->getQuery()->getSelectQuery()->query();
         $slots = array();
 
         foreach ($records as $item) {
@@ -274,7 +274,7 @@ class Monitoring_AlertsummaryController extends Controller
         );
 
         $defects = array();
-        $records = $query->getQuery()->fetchAll();
+        $records = $query->getQuery()->getSelectQuery()->query();
         $period     = $this->createPeriod($interval);
 
         foreach ($period as $entry) {
@@ -332,7 +332,7 @@ class Monitoring_AlertsummaryController extends Controller
 
         $query->order('notification_start_time', 'asc');
 
-        $records = $query->getQuery()->fetchAll();
+        $records = $query->getQuery()->getSelectQuery()->query();
 
         $interval       = $this->getInterval();
         $period         = $this->createPeriod($interval);
