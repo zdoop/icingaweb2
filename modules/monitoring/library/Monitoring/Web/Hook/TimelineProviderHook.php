@@ -19,19 +19,11 @@ abstract class TimelineProviderHook
 
     /**
      * Return the visible entries supposed to be shown on the timeline
+     * and the entries supposed to be used to calculate forecasts
      *
      * @param   TimeRange   $range      The range of time for which to fetch entries
      *
-     * @return  array                   The entries to display on the timeline
+     * @return  Iterator                The entries to display on the timeline
      */
-    abstract public function fetchEntries(TimeRange $range);
-
-    /**
-     * Return the entries supposed to be used to calculate forecasts
-     *
-     * @param   TimeRange   $range      The range of time for which to fetch forecasts
-     *
-     * @return  array                   The entries to calculate forecasts with
-     */
-    abstract public function fetchForecasts(TimeRange $range);
+    abstract public function fetchResults(TimeRange $range);
 }

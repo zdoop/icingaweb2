@@ -6,6 +6,9 @@ namespace Icinga\Module\Monitoring\Timeline;
 use DateTime;
 use Exception;
 use ArrayIterator;
+use AppendIterator;
+use IteratorIterator;
+use Traversable;
 use Icinga\Exception\IcingaException;
 use IteratorAggregate;
 use Icinga\Data\Filter\Filter;
@@ -19,18 +22,11 @@ use Icinga\Module\Monitoring\DataView\DataView;
 class TimeLine implements IteratorAggregate
 {
     /**
-     * The resultset returned by the dataview
-     *
-     * @var array
-     */
-    private $resultset;
-
-    /**
      * The groups this timeline uses for display purposes
      *
      * @var array
      */
-    private $displayGroups;
+    private $displayGroups = null;
 
     /**
      * The session to use
@@ -68,11 +64,18 @@ class TimeLine implements IteratorAggregate
     protected $displayRange;
 
     /**
-     * The range of time for which to calculate forecasts
+     * The end of the range of time based on which to calculate forecasts
      *
-     * @var TimeRange
+     * @var DateTime
      */
-    protected $forecastRange;
+    protected $forecastEnd = null;
+
+    /**
+     * Cache for self::generateCalculationBase()
+     *
+     * @var float
+     */
+    protected $generateCalculationBase = null;
 
     /**
      * The maximum diameter each circle can have
@@ -142,13 +145,17 @@ class TimeLine implements IteratorAggregate
     }
 
     /**
-     * Set the range of time for which to calculate forecasts
+     * Set the end of the range of time based on which to calculate forecasts
      *
-     * @param   TimeRange   $range      The range of time for which to calculate forecasts
+     * @param   DateTime    $end        The end of the range of time
+     *                                  based on which to calculate forecasts
+     *
+     * @return  $this
      */
-    public function setForecastRange(TimeRange $range)
+    public function setForecastEnd(DateTime $end)
     {
-        $this->forecastRange = $range;
+        $this->forecastEnd = $end;
+        return $this;
     }
 
     /**
@@ -245,14 +252,15 @@ class TimeLine implements IteratorAggregate
      */
     public function getExtrapolatedCircleWidth(TimeEntry $group, $precision = 0)
     {
-        $eventCount = 0;
-        foreach ($this->displayGroups as $groups) {
-            if (array_key_exists($group->getName(), $groups)) {
-                $eventCount += $groups[$group->getName()]->getValue();
+        $totalCount = $eventCount = 0;
+        foreach ($this as $timeInfo) {
+            ++$totalCount;
+            if (array_key_exists($group->getName(), $timeInfo[1])) {
+                $eventCount += $timeInfo[1][$group->getName()]->getValue();
             }
         }
 
-        $extrapolatedCount = (int) $eventCount / count($this->displayGroups);
+        $extrapolatedCount = (int) $eventCount / $totalCount;
         if ($extrapolatedCount < $group->getValue()) {
             return $this->calculateCircleWidth($group, $precision);
         }
@@ -306,45 +314,47 @@ class TimeLine implements IteratorAggregate
      */
     protected function generateCalculationBase()
     {
-        $allEntries = $this->groupEntries(
-            array_merge(
-                $this->fetchEntries(),
-                $this->fetchForecasts()
-            ),
-            new TimeRange(
-                $this->displayRange->getStart(),
-                $this->forecastRange->getEnd(),
-                $this->displayRange->getInterval()
-            )
-        );
-
-        $highestValue = 0;
-        foreach ($allEntries as $groups) {
-            foreach ($groups as $group) {
-                if ($group->getValue() * $group->getWeight() > $highestValue) {
-                    $highestValue = $group->getValue() * $group->getWeight();
+        if ($this->generateCalculationBase === null) {
+            $this->displayGroups = array();
+            $highestValue = 0;
+            foreach ($this->groupEntries(
+                $this->fetchResults(),
+                new TimeRange(
+                    $this->displayRange->getStart(),
+                    $this->forecastEnd,
+                    $this->displayRange->getInterval()
+                )
+            ) as $key => $groups) {
+                if ($key > $this->displayRange->getEnd()->getTimestamp()) {
+                    $this->displayGroups[$key] = $groups;
+                }
+                foreach ($groups as $group) {
+                    if ($highestValue < (
+                        $newVal = $group->getValue() * $group->getWeight()
+                    )) {
+                        $highestValue = $newVal;
+                    }
                 }
             }
+            $this->generateCalculationBase = pow($highestValue, 0.01);
         }
-
-        return pow($highestValue, 1 / 100); // 100 == 100%
+        return $this->generateCalculationBase;
     }
 
     /**
      * Fetch all entries and forecasts by using the dataview associated with this timeline
      *
-     * @return  array       The dataview's result
+     * @return  Iterator    The dataview's result
      */
     private function fetchResults()
     {
-        $hookResults = array();
+        $hookResults = new AppendIterator;
         foreach (Hook::all('timeline') as $timelineProvider) {
-            $hookResults = array_merge(
-                $hookResults,
-                $timelineProvider->fetchEntries($this->displayRange),
-                $timelineProvider->fetchForecasts($this->forecastRange)
-            );
-
+            $hookResults->append($timelineProvider->fetchResults(new TimeRange(
+                $this->displayRange->getStart(),
+                $this->forecastEnd,
+                $this->displayRange->getInterval()
+            )));
             foreach ($timelineProvider->getIdentifiers() as $identifier => $attributes) {
                 if (!array_key_exists($identifier, $this->identifiers)) {
                     $this->identifiers[$identifier] = $attributes;
@@ -352,61 +362,27 @@ class TimeLine implements IteratorAggregate
             }
         }
 
-        $query = $this->dataview;
-        $filter = Filter::matchAll(
-            Filter::where('type', array_keys($this->identifiers)),
-            Filter::expression('timestamp', '<=', $this->displayRange->getStart()->getTimestamp()),
-            Filter::expression('timestamp', '>', $this->displayRange->getEnd()->getTimestamp())
-        );
-        $query->applyFilter($filter);
-        return array_merge($query->getQuery()->fetchAll(), $hookResults);
-    }
-
-    /**
-     * Fetch all entries
-     *
-     * @return  array       The entries to display on the timeline
-     */
-    protected function fetchEntries()
-    {
-        if ($this->resultset === null) {
-            $this->resultset = $this->fetchResults();
-        }
-
-        $range = $this->displayRange;
-        return array_filter(
-            $this->resultset,
-            function ($e) use ($range) { return $range->validateTime($e->time); }
-        );
-    }
-
-    /**
-     * Fetch all forecasts
-     *
-     * @return  array       The entries to calculate forecasts with
-     */
-    protected function fetchForecasts()
-    {
-        if ($this->resultset === null) {
-            $this->resultset = $this->fetchResults();
-        }
-
-        $range = $this->forecastRange;
-        return array_filter(
-            $this->resultset,
-            function ($e) use ($range) { return $range->validateTime($e->time); }
-        );
+        $results = new AppendIterator;
+        $results->append(new IteratorIterator(
+            $this->dataview->applyFilter(Filter::matchAll(
+                Filter::where('type', array_keys($this->identifiers)),
+                Filter::expression('timestamp', '<=', $this->displayRange->getStart()->getTimestamp()),
+                Filter::expression('timestamp', '>', $this->forecastEnd->getTimestamp())
+            ))->getQuery()->getSelectQuery()->query()
+        ));
+        $results->append($hookResults);
+        return $results;
     }
 
     /**
      * Return the given entries grouped together
      *
-     * @param   array       $entries        The entries to group
-     * @param   TimeRange   $timeRange      The range of time to group by
+     * @param   Traversable     $entries        The entries to group
+     * @param   TimeRange       $timeRange      The range of time to group by
      *
-     * @return  array                 displayGroups      The grouped entries
+     * @return  array                           The grouped entries
      */
-    protected function groupEntries(array $entries, TimeRange $timeRange)
+    protected function groupEntries(Traversable $entries, TimeRange $timeRange)
     {
         $counts = array();
         foreach ($entries as $entry) {
@@ -455,7 +431,9 @@ class TimeLine implements IteratorAggregate
      */
     protected function toArray()
     {
-        $this->displayGroups = $this->groupEntries($this->fetchEntries(), $this->displayRange);
+        if ($this->displayGroups === null) {
+            $this->generateCalculationBase();
+        }
 
         $array = array();
         foreach ($this->displayRange as $timestamp => $timeframe) {

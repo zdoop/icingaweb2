@@ -75,7 +75,7 @@ class Monitoring_TimelineController extends Controller
         $timeline->setMaximumCircleWidth('6em');
         $timeline->setMinimumCircleWidth('0.3em');
         $timeline->setDisplayRange($displayRange);
-        $timeline->setForecastRange($forecastRange);
+        $timeline->setForecastEnd($forecastRange->getEnd());
         $beingExtended = $this->getRequest()->getParam('extend') == 1;
         $timeline->setSession($this->Window()->getSessionNamespace('timeline', !$beingExtended));
 
