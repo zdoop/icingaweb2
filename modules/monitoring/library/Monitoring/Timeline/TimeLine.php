@@ -310,6 +310,10 @@ class TimeLine implements IteratorAggregate
         return $this->calculationBase;
     }
 
+    /**
+     * Generate grouped entries (self::$displayGroups) and
+     * calculation base (self::$generatedCalculationBase)
+     */
     protected function generateGroupedEntries()
     {
         if ($this->displayGroups === null) {
