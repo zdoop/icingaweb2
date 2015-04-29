@@ -75,7 +75,7 @@ class TimeLine implements IteratorAggregate
      *
      * @var float
      */
-    protected $generateCalculationBase = null;
+    protected $generatedCalculationBase = null;
 
     /**
      * Cache between self::generateGroupedEntries() and
@@ -322,11 +322,11 @@ class TimeLine implements IteratorAggregate
      */
     protected function generateCalculationBase()
     {
-        if ($this->generateCalculationBase === null) {
+        if ($this->generatedCalculationBase === null) {
             $this->generateGroupedEntries();
-            $this->generateCalculationBase = pow($this->highestValue, 0.01);
+            $this->generatedCalculationBase = pow($this->highestValue, 0.01);
         }
-        return $this->generateCalculationBase;
+        return $this->generatedCalculationBase;
     }
 
     protected function generateGroupedEntries()
