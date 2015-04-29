@@ -78,6 +78,14 @@ class TimeLine implements IteratorAggregate
     protected $generateCalculationBase = null;
 
     /**
+     * Cache between self::generateGroupedEntries() and
+     * self::generateCalculationBase()
+     *
+     * @var float
+     */
+    protected $highestValue;
+
+    /**
      * The maximum diameter each circle can have
      *
      * @var float
@@ -315,8 +323,17 @@ class TimeLine implements IteratorAggregate
     protected function generateCalculationBase()
     {
         if ($this->generateCalculationBase === null) {
+            $this->generateGroupedEntries();
+            $this->generateCalculationBase = pow($this->highestValue, 0.01);
+        }
+        return $this->generateCalculationBase;
+    }
+
+    protected function generateGroupedEntries()
+    {
+        if ($this->displayGroups === null) {
             $this->displayGroups = array();
-            $highestValue = 0;
+            $this->highestValue = 0;
             foreach ($this->groupEntries(
                 $this->fetchResults(),
                 new TimeRange(
@@ -329,16 +346,14 @@ class TimeLine implements IteratorAggregate
                     $this->displayGroups[$key] = $groups;
                 }
                 foreach ($groups as $group) {
-                    if ($highestValue < (
+                    if ($this->highestValue < (
                         $newVal = $group->getValue() * $group->getWeight()
                     )) {
-                        $highestValue = $newVal;
+                        $this->highestValue = $newVal;
                     }
                 }
             }
-            $this->generateCalculationBase = pow($highestValue, 0.01);
         }
-        return $this->generateCalculationBase;
     }
 
     /**
@@ -431,9 +446,7 @@ class TimeLine implements IteratorAggregate
      */
     protected function toArray()
     {
-        if ($this->displayGroups === null) {
-            $this->generateCalculationBase();
-        }
+        $this->generateGroupedEntries();
 
         $array = array();
         foreach ($this->displayRange as $timestamp => $timeframe) {
