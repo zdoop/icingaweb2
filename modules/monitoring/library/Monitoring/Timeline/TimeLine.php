@@ -78,6 +78,13 @@ class TimeLine implements IteratorAggregate
     protected $generatedCalculationBase = null;
 
     /**
+     * Cache for self::countEntries()
+     *
+     * @var array
+     */
+    protected $countedEntries = null;
+
+    /**
      * The maximum diameter each circle can have
      *
      * @var float
@@ -316,30 +323,12 @@ class TimeLine implements IteratorAggregate
      */
     protected function generateGroupedEntries()
     {
-        $timeRange = new TimeRange(
+        $groups_ = array();
+        foreach ($this->countEntries($this->fetchResults(), new TimeRange(
             $this->displayRange->getStart(),
             $this->forecastEnd,
             $this->displayRange->getInterval()
-        );
-
-        $counts = array();
-        foreach ($this->fetchResults() as $entry) {
-            $entryTime = new DateTime();
-            $entryTime->setTimestamp($entry->time);
-            $timestamp = $timeRange->findTimeframe($entryTime, true);
-
-            if ($timestamp !== null) {
-                if (array_key_exists($entry->name, $counts)
-                    && array_key_exists($timestamp, $counts[$entry->name])) {
-                    $counts[$entry->name][$timestamp] += 1;
-                } else {
-                    $counts[$entry->name][$timestamp] = 1;
-                }
-            }
-        }
-
-        $groups_ = array();
-        foreach ($counts as $name => $data) {
+        )) as $name => $data) {
             foreach ($data as $timestamp => $count) {
                 $dateTime = new DateTime();
                 $dateTime->setTimestamp($timestamp);
@@ -406,6 +395,36 @@ class TimeLine implements IteratorAggregate
         ));
         $results->append($hookResults);
         return $results;
+    }
+
+    /**
+     * Return the given entries counted
+     *
+     * @param   Traversable     $entries        The entries to count
+     * @param   TimeRange       $timeRange      The range of time to group by
+     *
+     * @return  array                           The counted entries
+     */
+    protected function countEntries(Traversable $entries, TimeRange $timeRange)
+    {
+        if ($this->countedEntries === null) {
+            $this->countedEntries = array();
+            foreach ($entries as $entry) {
+                $entryTime = new DateTime();
+                $entryTime->setTimestamp($entry->time);
+                $timestamp = $timeRange->findTimeframe($entryTime, true);
+
+                if ($timestamp !== null) {
+                    if (array_key_exists($entry->name, $this->countedEntries)
+                        && array_key_exists($timestamp, $this->countedEntries[$entry->name])) {
+                        $this->countedEntries[$entry->name][$timestamp] += 1;
+                    } else {
+                        $this->countedEntries[$entry->name][$timestamp] = 1;
+                    }
+                }
+            }
+        }
+        return $this->countedEntries;
     }
 
     /**
