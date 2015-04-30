@@ -85,6 +85,13 @@ class TimeLine implements IteratorAggregate
     protected $countedEntries = null;
 
     /**
+     * Cache for self::groupEntries()
+     *
+     * @var array
+     */
+    protected $groupedEntries = null;
+
+    /**
      * The maximum diameter each circle can have
      *
      * @var float
@@ -324,31 +331,13 @@ class TimeLine implements IteratorAggregate
     protected function generateGroupedEntries()
     {
         if ($this->displayGroups === null) {
-            $groups_ = array();
-            foreach ($this->countEntries($this->fetchResults(), new TimeRange(
+            $this->displayGroups = array();
+            $highestValue = 0;
+            foreach ($this->groupEntries($this->fetchResults(), new TimeRange(
                 $this->displayRange->getStart(),
                 $this->forecastEnd,
                 $this->displayRange->getInterval()
-            )) as $name => $data) {
-                foreach ($data as $timestamp => $count) {
-                    $dateTime = new DateTime();
-                    $dateTime->setTimestamp($timestamp);
-                    $groups_[$timestamp][$name] = TimeEntry::fromArray(
-                        array_merge(
-                            $this->identifiers[$name],
-                            array(
-                                'name'      => $name,
-                                'value'     => $count,
-                                'dateTime'  => $dateTime
-                            )
-                        )
-                    );
-                }
-            }
-
-            $this->displayGroups = array();
-            $highestValue = 0;
-            foreach ($groups_ as $key => $groups) {
+            )) as $key => $groups) {
                 if ($key > $this->displayRange->getEnd()->getTimestamp()) {
                     $this->displayGroups[$key] = $groups;
                 }
@@ -395,6 +384,38 @@ class TimeLine implements IteratorAggregate
         ));
         $results->append($hookResults);
         return $results;
+    }
+
+    /**
+     * Return the given entries grouped together
+     *
+     * @param   Traversable     $entries        The entries to group
+     * @param   TimeRange       $timeRange      The range of time to group by
+     *
+     * @return  array                           The grouped entries
+     */
+    protected function groupEntries(Traversable $entries, TimeRange $timeRange)
+    {
+        if ($this->groupedEntries === null) {
+            $this->groupedEntries = array();
+            foreach ($this->countEntries($entries, $timeRange) as $name => $data) {
+                foreach ($data as $timestamp => $count) {
+                    $dateTime = new DateTime();
+                    $dateTime->setTimestamp($timestamp);
+                    $this->groupedEntries[$timestamp][$name] = TimeEntry::fromArray(
+                        array_merge(
+                            $this->identifiers[$name],
+                            array(
+                                'name'      => $name,
+                                'value'     => $count,
+                                'dateTime'  => $dateTime
+                            )
+                        )
+                    );
+                }
+            }
+        }
+        return $this->groupedEntries;
     }
 
     /**
