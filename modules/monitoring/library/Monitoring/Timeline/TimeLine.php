@@ -71,19 +71,11 @@ class TimeLine implements IteratorAggregate
     protected $forecastEnd = null;
 
     /**
-     * Cache for self::generateCalculationBase()
+     * Cache for self::getCalculationBase()
      *
      * @var float
      */
     protected $generatedCalculationBase = null;
-
-    /**
-     * Cache between self::generateGroupedEntries() and
-     * self::generateCalculationBase()
-     *
-     * @var float
-     */
-    protected $highestValue;
 
     /**
      * The maximum diameter each circle can have
@@ -297,7 +289,10 @@ class TimeLine implements IteratorAggregate
             $calculationBase = $this->session !== null ? $this->session->get('calculationBase') : null;
 
             if ($create) {
-                $new = $this->generateCalculationBase();
+                if ($this->generatedCalculationBase === null) {
+                    $this->generateGroupedEntries();
+                }
+                $new = $this->generatedCalculationBase;
                 if ($new > $calculationBase) {
                     $this->calculationBase = $new;
 
@@ -315,25 +310,11 @@ class TimeLine implements IteratorAggregate
         return $this->calculationBase;
     }
 
-    /**
-     * Generate a new base to calculate circle widths with
-     *
-     * @return  float
-     */
-    protected function generateCalculationBase()
-    {
-        if ($this->generatedCalculationBase === null) {
-            $this->generateGroupedEntries();
-            $this->generatedCalculationBase = pow($this->highestValue, 0.01);
-        }
-        return $this->generatedCalculationBase;
-    }
-
     protected function generateGroupedEntries()
     {
         if ($this->displayGroups === null) {
             $this->displayGroups = array();
-            $this->highestValue = 0;
+            $highestValue = 0;
             foreach ($this->groupEntries(
                 $this->fetchResults(),
                 new TimeRange(
@@ -346,13 +327,14 @@ class TimeLine implements IteratorAggregate
                     $this->displayGroups[$key] = $groups;
                 }
                 foreach ($groups as $group) {
-                    if ($this->highestValue < (
+                    if ($highestValue < (
                         $newVal = $group->getValue() * $group->getWeight()
                     )) {
-                        $this->highestValue = $newVal;
+                        $highestValue = $newVal;
                     }
                 }
             }
+            $this->generatedCalculationBase = pow($highestValue, 0.01);
         }
     }
 
