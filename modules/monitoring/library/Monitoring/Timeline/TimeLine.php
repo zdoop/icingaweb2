@@ -316,17 +316,50 @@ class TimeLine implements IteratorAggregate
      */
     protected function generateGroupedEntries()
     {
+        $timeRange = new TimeRange(
+            $this->displayRange->getStart(),
+            $this->forecastEnd,
+            $this->displayRange->getInterval()
+        );
+
+        $counts = array();
+        foreach ($this->fetchResults() as $entry) {
+            $entryTime = new DateTime();
+            $entryTime->setTimestamp($entry->time);
+            $timestamp = $timeRange->findTimeframe($entryTime, true);
+
+            if ($timestamp !== null) {
+                if (array_key_exists($entry->name, $counts)
+                    && array_key_exists($timestamp, $counts[$entry->name])) {
+                    $counts[$entry->name][$timestamp] += 1;
+                } else {
+                    $counts[$entry->name][$timestamp] = 1;
+                }
+            }
+        }
+
+        $groups_ = array();
+        foreach ($counts as $name => $data) {
+            foreach ($data as $timestamp => $count) {
+                $dateTime = new DateTime();
+                $dateTime->setTimestamp($timestamp);
+                $groups_[$timestamp][$name] = TimeEntry::fromArray(
+                    array_merge(
+                        $this->identifiers[$name],
+                        array(
+                            'name'      => $name,
+                            'value'     => $count,
+                            'dateTime'  => $dateTime
+                        )
+                    )
+                );
+            }
+        }
+
         if ($this->displayGroups === null) {
             $this->displayGroups = array();
             $highestValue = 0;
-            foreach ($this->groupEntries(
-                $this->fetchResults(),
-                new TimeRange(
-                    $this->displayRange->getStart(),
-                    $this->forecastEnd,
-                    $this->displayRange->getInterval()
-                )
-            ) as $key => $groups) {
+            foreach ($groups_ as $key => $groups) {
                 if ($key > $this->displayRange->getEnd()->getTimestamp()) {
                     $this->displayGroups[$key] = $groups;
                 }
@@ -373,56 +406,6 @@ class TimeLine implements IteratorAggregate
         ));
         $results->append($hookResults);
         return $results;
-    }
-
-    /**
-     * Return the given entries grouped together
-     *
-     * @param   Traversable     $entries        The entries to group
-     * @param   TimeRange       $timeRange      The range of time to group by
-     *
-     * @return  array                           The grouped entries
-     */
-    protected function groupEntries(Traversable $entries, TimeRange $timeRange)
-    {
-        $counts = array();
-        foreach ($entries as $entry) {
-            $entryTime = new DateTime();
-            $entryTime->setTimestamp($entry->time);
-            $timestamp = $timeRange->findTimeframe($entryTime, true);
-
-            if ($timestamp !== null) {
-                if (array_key_exists($entry->name, $counts)) {
-                    if (array_key_exists($timestamp, $counts[$entry->name])) {
-                        $counts[$entry->name][$timestamp] += 1;
-                    } else {
-                        $counts[$entry->name][$timestamp] = 1;
-                    }
-                } else {
-                    $counts[$entry->name][$timestamp] = 1;
-                }
-            }
-        }
-
-        $groups = array();
-        foreach ($counts as $name => $data) {
-            foreach ($data as $timestamp => $count) {
-                $dateTime = new DateTime();
-                $dateTime->setTimestamp($timestamp);
-                $groups[$timestamp][$name] = TimeEntry::fromArray(
-                    array_merge(
-                        $this->identifiers[$name],
-                        array(
-                            'name'      => $name,
-                            'value'     => $count,
-                            'dateTime'  => $dateTime
-                        )
-                    )
-                );
-            }
-        }
-
-        return $groups;
     }
 
     /**
