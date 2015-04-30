@@ -323,29 +323,29 @@ class TimeLine implements IteratorAggregate
      */
     protected function generateGroupedEntries()
     {
-        $groups_ = array();
-        foreach ($this->countEntries($this->fetchResults(), new TimeRange(
-            $this->displayRange->getStart(),
-            $this->forecastEnd,
-            $this->displayRange->getInterval()
-        )) as $name => $data) {
-            foreach ($data as $timestamp => $count) {
-                $dateTime = new DateTime();
-                $dateTime->setTimestamp($timestamp);
-                $groups_[$timestamp][$name] = TimeEntry::fromArray(
-                    array_merge(
-                        $this->identifiers[$name],
-                        array(
-                            'name'      => $name,
-                            'value'     => $count,
-                            'dateTime'  => $dateTime
-                        )
-                    )
-                );
-            }
-        }
-
         if ($this->displayGroups === null) {
+            $groups_ = array();
+            foreach ($this->countEntries($this->fetchResults(), new TimeRange(
+                $this->displayRange->getStart(),
+                $this->forecastEnd,
+                $this->displayRange->getInterval()
+            )) as $name => $data) {
+                foreach ($data as $timestamp => $count) {
+                    $dateTime = new DateTime();
+                    $dateTime->setTimestamp($timestamp);
+                    $groups_[$timestamp][$name] = TimeEntry::fromArray(
+                        array_merge(
+                            $this->identifiers[$name],
+                            array(
+                                'name'      => $name,
+                                'value'     => $count,
+                                'dateTime'  => $dateTime
+                            )
+                        )
+                    );
+                }
+            }
+
             $this->displayGroups = array();
             $highestValue = 0;
             foreach ($groups_ as $key => $groups) {
