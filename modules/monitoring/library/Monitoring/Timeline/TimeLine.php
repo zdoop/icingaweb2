@@ -333,11 +333,7 @@ class TimeLine implements IteratorAggregate
         if ($this->displayGroups === null) {
             $this->displayGroups = array();
             $highestValue = 0;
-            foreach ($this->groupEntries($this->fetchResults(), new TimeRange(
-                $this->displayRange->getStart(),
-                $this->forecastEnd,
-                $this->displayRange->getInterval()
-            )) as $key => $groups) {
+            foreach ($this->groupEntries() as $key => $groups) {
                 if ($key > $this->displayRange->getEnd()->getTimestamp()) {
                     $this->displayGroups[$key] = $groups;
                 }
@@ -387,18 +383,15 @@ class TimeLine implements IteratorAggregate
     }
 
     /**
-     * Return the given entries grouped together
+     * Return the entries grouped together
      *
-     * @param   Traversable     $entries        The entries to group
-     * @param   TimeRange       $timeRange      The range of time to group by
-     *
-     * @return  array                           The grouped entries
+     * @return  array   The grouped entries
      */
-    protected function groupEntries(Traversable $entries, TimeRange $timeRange)
+    protected function groupEntries()
     {
         if ($this->groupedEntries === null) {
             $this->groupedEntries = array();
-            foreach ($this->countEntries($entries, $timeRange) as $name => $data) {
+            foreach ($this->countEntries() as $name => $data) {
                 foreach ($data as $timestamp => $count) {
                     $dateTime = new DateTime();
                     $dateTime->setTimestamp($timestamp);
@@ -419,18 +412,20 @@ class TimeLine implements IteratorAggregate
     }
 
     /**
-     * Return the given entries counted
+     * Return the entries counted
      *
-     * @param   Traversable     $entries        The entries to count
-     * @param   TimeRange       $timeRange      The range of time to group by
-     *
-     * @return  array                           The counted entries
+     * @return  array   The counted entries
      */
-    protected function countEntries(Traversable $entries, TimeRange $timeRange)
+    protected function countEntries()
     {
         if ($this->countedEntries === null) {
             $this->countedEntries = array();
-            foreach ($entries as $entry) {
+            $timeRange = new TimeRange(
+                $this->displayRange->getStart(),
+                $this->forecastEnd,
+                $this->displayRange->getInterval()
+            );
+            foreach ($this->fetchResults() as $entry) {
                 $entryTime = new DateTime();
                 $entryTime->setTimestamp($entry->time);
                 $timestamp = $timeRange->findTimeframe($entryTime, true);
