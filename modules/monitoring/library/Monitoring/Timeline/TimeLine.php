@@ -303,10 +303,7 @@ class TimeLine implements IteratorAggregate
             $calculationBase = $this->session !== null ? $this->session->get('calculationBase') : null;
 
             if ($create) {
-                if ($this->generatedCalculationBase === null) {
-                    $this->generateGroupedEntries();
-                }
-                $new = $this->generatedCalculationBase;
+                $new = $this->generateCalculationBase();
                 if ($new > $calculationBase) {
                     $this->calculationBase = $new;
 
@@ -325,18 +322,33 @@ class TimeLine implements IteratorAggregate
     }
 
     /**
-     * Generate grouped entries (self::$displayGroups) and
-     * calculation base (self::$generatedCalculationBase)
+     * Generate the groups this timeline uses for display purposes
+     *
+     * @return  array
      */
-    protected function generateGroupedEntries()
+    protected function generateDisplayGroups()
     {
         if ($this->displayGroups === null) {
             $this->displayGroups = array();
-            $highestValue = 0;
             foreach ($this->groupEntries() as $key => $groups) {
                 if ($key > $this->displayRange->getEnd()->getTimestamp()) {
                     $this->displayGroups[$key] = $groups;
                 }
+            }
+        }
+        return $this->displayGroups;
+    }
+
+    /**
+     * Generate a new base to calculate circle widths with
+     *
+     * @return  float
+     */
+    protected function generateCalculationBase()
+    {
+        if ($this->generatedCalculationBase === null) {
+            $highestValue = 0;
+            foreach ($this->groupEntries() as $key => $groups) {
                 foreach ($groups as $group) {
                     if ($highestValue < (
                         $newVal = $group->getValue() * $group->getWeight()
@@ -347,6 +359,7 @@ class TimeLine implements IteratorAggregate
             }
             $this->generatedCalculationBase = pow($highestValue, 0.01);
         }
+        return $this->generatedCalculationBase;
     }
 
     /**
@@ -450,13 +463,13 @@ class TimeLine implements IteratorAggregate
      */
     protected function toArray()
     {
-        $this->generateGroupedEntries();
+        $displayGroups = $this->generateDisplayGroups();
 
         $array = array();
         foreach ($this->displayRange as $timestamp => $timeframe) {
             $array[] = array(
                 $timeframe,
-                array_key_exists($timestamp, $this->displayGroups) ? $this->displayGroups[$timestamp] : array()
+                array_key_exists($timestamp, $displayGroups) ? $displayGroups[$timestamp] : array()
             );
         }
 
