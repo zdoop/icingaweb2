@@ -53,7 +53,7 @@ class SshResourceForm extends Form
         if ($this->getRequest()->getActionName() != 'editresource') {
 
             $callbackValidator = new Zend_Validate_Callback(function ($value) {
-                if (openssl_pkey_get_private($value) === false) {
+                if (openssl_pkey_get_private('file://' . $value) === false) {
                     return false;
                 }
                 return true;
@@ -64,14 +64,15 @@ class SshResourceForm extends Form
             );
 
             $this->addElement(
-                'textarea',
+                'file',
                 'private_key',
                 array(
                     'required'      => true,
                     'label'         => $this->translate('Private Key'),
                     'description'   => $this->translate('The private key which will be used for the SSH connections'),
                     'class'         => 'resource ssh-identity',
-                    'validators'    => array($callbackValidator)
+                    'validators'    => array($callbackValidator),
+                    'destination'   => '/etc/icingaweb2/ssh/'
                 )
             );
         } else {
@@ -125,22 +126,19 @@ class SshResourceForm extends Form
     public static function beforeAdd(ResourceConfigForm $form)
     {
         $configDir = Icinga::app()->getConfigDir();
-        $user = $form->getElement('user')->getValue();
+        $name = $form->getElement('name')->getValue();
+        $key = $form->getElement('private_key')->getValue();
 
-        $filePath = $configDir . '/ssh/' . $user;
+        $filePath = $configDir . '/ssh/';
 
-        if (! file_exists($filePath)) {
-            $file = File::create($filePath, 0600);
-        } else {
+        if (! rename($filePath.$key, $filePath.$name)) {
             $form->error(
-                sprintf($form->translate('The private key for the user "%s" is already exists.'), $user)
+                sprintf($form->translate('The private key for the resource "%s" is already exists.'), $name)
             );
             return false;
         }
 
-        $file->fwrite($form->getElement('private_key')->getValue());
-
-        $form->getElement('private_key')->setValue($configDir . '/ssh/' . $user);
+        $form->getElement('private_key')->setValue($configDir . '/ssh/' . $name);
 
         return true;
     }
