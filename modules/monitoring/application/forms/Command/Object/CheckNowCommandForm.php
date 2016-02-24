@@ -19,6 +19,7 @@ class CheckNowCommandForm extends ObjectsCommandForm
     public function init()
     {
         $this->setAttrib('class', 'inline');
+        $this->setSubmitLabel($this->translate('Check now'));
     }
 
     /**
@@ -39,7 +40,7 @@ class CheckNowCommandForm extends ObjectsCommandForm
                     ),
                     'escape'        => false,
                     'ignore'        => true,
-                    'label'         => $this->getView()->icon('reschedule') . $this->translate('Check now'),
+                    'label'         => $this->getView()->icon('reschedule') . $this->getSubmitLabel(),
                     'type'          => 'submit',
                     'title'         => $this->translate('Schedule the next active check to run immediately'),
                     'value'         => $this->translate('Check now')
