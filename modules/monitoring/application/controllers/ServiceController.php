@@ -26,6 +26,7 @@ class ServiceController extends MonitoredObjectController
      */
     public function init()
     {
+        parent::init();
         $service = new Service(
             $this->backend, $this->params->getRequired('host'), $this->params->getRequired('service')
         );

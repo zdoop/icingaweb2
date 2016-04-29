@@ -106,6 +106,9 @@ abstract class MonitoredObjectController extends Controller
         $this->view->history = $this->object->fetchEventHistory()->eventhistory;
         $this->applyRestriction('monitoring/filter/objects', $this->view->history);
 
+        $this->setupSortControl(array(
+            'timestamp' => $this->translate('Occurence')
+        ), $this->view->history);
         $this->setupLimitControl(50);
         $this->setupPaginationControl($this->view->history, 50);
         $this->view->object = $this->object;

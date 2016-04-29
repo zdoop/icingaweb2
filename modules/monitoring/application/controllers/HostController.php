@@ -27,6 +27,7 @@ class HostController extends MonitoredObjectController
      */
     public function init()
     {
+        parent::init();
         $host = new Host($this->backend, $this->params->getRequired('host'));
         $this->applyRestriction('monitoring/filter/objects', $host);
         if ($host->fetch() === false) {

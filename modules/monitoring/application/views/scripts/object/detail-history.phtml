@@ -8,6 +8,10 @@ if (! $this->compact): ?>
 } else {
     echo $this->render('partials/object/host-header.phtml');
 } ?>
+    <div class="sort-controls-container">
+        <?= $this->limiter ?>
+        <?= $this->sortBox ?>
+    </div>
 </div>
 <?php endif ?>
 <?= $this->render('partials/event-history.phtml') ?>
