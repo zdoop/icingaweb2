@@ -117,7 +117,7 @@ class JavaScript
 
         // We do not minify vendor files
         foreach ($vendorFiles as $file) {
-            $out .= file_get_contents($file);
+            $out .= file_get_contents($file) . "\n\n\n";
         }
 
         foreach ($jsFiles as $file) {
