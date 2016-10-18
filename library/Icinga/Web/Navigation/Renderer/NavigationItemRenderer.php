@@ -174,9 +174,12 @@ class NavigationItemRenderer
             );
         }
 
-        $label = $this->getEscapeLabel()
-            ? $this->view()->escape($item->getLabel())
-            : $item->getLabel();
+        $label = nl2br(
+            $this->getEscapeLabel()
+                ? $this->view()->escape($item->getLabel())
+                : $item->getLabel(),
+            false
+        );
         if (($icon = $item->getIcon()) !== null) {
             $label = $this->view()->icon($icon) . $label;
         }
