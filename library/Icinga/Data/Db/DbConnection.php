@@ -60,7 +60,6 @@ class DbConnection implements Selectable, Extensible, Updatable, Reducible, Insp
     );
 
     private static $driverOptions = array(
-        PDO::ATTR_TIMEOUT    => 10,
         PDO::ATTR_CASE       => PDO::CASE_LOWER,
         PDO::ATTR_ERRMODE    => PDO::ERRMODE_EXCEPTION
     );
@@ -125,6 +124,8 @@ class DbConnection implements Selectable, Extensible, Updatable, Reducible, Insp
     {
         $genericAdapterOptions  = self::$genericAdapterOptions;
         $driverOptions          = self::$driverOptions;
+        $timeout = $this->config->timeout;
+        $driverOptions[PDO::ATTR_TIMEOUT] = $timeout === null || $timeout === '' ? 10 : (int) $timeout;
         $adapterParamaters      = array(
             'host'              => $this->config->host,
             'username'          => $this->config->username,

@@ -157,6 +157,19 @@ class DbResourceForm extends Form
                 'label'         => $this->translate('Persistent')
             )
         );
+        $this->addElement(
+            'number',
+            'timeout',
+            array(
+                'label'             => $this->translate('Timeout'),
+                'description'       => $this->translate(
+                    'How many seconds to wait for reply from the database server.'
+                    . ' Zero means infinite. Leave empty to use the default'
+                ),
+                'min'               => -1.0,
+                'step'              => 1.0
+            )
+        );
 
         return $this;
     }
