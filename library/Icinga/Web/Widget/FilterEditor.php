@@ -261,28 +261,23 @@ class FilterEditor extends AbstractWidget
         $filter = $this->getFilter();
 
         if ($search !== null) {
-            if (strpos($search, '=') !== false) {
-                list($k, $v) = preg_split('/=/', $search);
-                $filter = $this->mergeRootExpression($filter, trim($k), '=', ltrim($v));
-            } else {
-                if ($this->searchColumns === null && $this->query instanceof FilterColumns) {
-                    $this->searchColumns = $this->query->getSearchColumns($search);
-                }
+            if ($this->searchColumns === null && $this->query instanceof FilterColumns) {
+                $this->searchColumns = $this->query->getSearchColumns($search);
+            }
 
-                if (! empty($this->searchColumns)) {
-                    if (! $this->resetSearchColumns($filter)) {
-                        $filter = Filter::matchAll();
-                    }
-                    $filters = array();
-                    $search = ltrim($search);
-                    foreach ($this->searchColumns as $searchColumn) {
-                        $filters[] = Filter::expression($searchColumn, '=', "*$search*");
-                    }
-                    $filter = $filter->andFilter(new FilterOr($filters));
-                } else {
-                    Notification::error(mt('monitoring', 'Cannot search here'));
-                    return $this;
+            if (! empty($this->searchColumns)) {
+                if (! $this->resetSearchColumns($filter)) {
+                    $filter = Filter::matchAll();
                 }
+                $filters = array();
+                $search = ltrim($search);
+                foreach ($this->searchColumns as $searchColumn) {
+                    $filters[] = Filter::expression($searchColumn, '=', "*$search*");
+                }
+                $filter = $filter->andFilter(new FilterOr($filters));
+            } else {
+                Notification::error(mt('monitoring', 'Cannot search here'));
+                return $this;
             }
 
             $url = $this->url()->setQueryString(
