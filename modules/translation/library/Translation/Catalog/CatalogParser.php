@@ -1,20 +1,20 @@
 <?php
 /* Icinga Web 2 | (c) 2016 Icinga Development Team | GPLv2+ */
 
-namespace Icinga\Module\Translation\Util;
+namespace Icinga\Module\Translation\Catalog;
 
 
 /**
- * Class GettextCatalogParser
+ * Class CatalogParser
  *
  * Reads gettext PO files and outputs the contained entries.
  *
- * @package Icinga\Module\Translation\Util
+ * @package Icinga\Module\Translation\Catalog
  */
-class GettextCatalogParser
+class CatalogParser
 {
     /**
-     * Create a new GettextCatalogParser
+     * Create a new CatalogParser
      *
      * @param   string  $catalogPath    The path to the catalog file to parse
      */
