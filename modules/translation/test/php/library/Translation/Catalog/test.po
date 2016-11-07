@@ -1,0 +1,41 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Icinga Web 2 (None)\n"
+"Report-Msgid-Bugs-To: dev@icinga.org\n"
+"POT-Creation-Date: 2016-09-27 09:09+0000\n"
+"PO-Revision-Date: 2016-09-27 11:15+0200\n"
+"Last-Translator: Eric Lippmann <eric.lippmann@netways.de>\n"
+
+# this is a
+# translator comment
+#. this is an
+#. extracted comment
+#: /this/is/a/path:142 /second/path:123
+#: /third/path:1243
+#, format1, format2
+#| msgctxt "fuzzy context of the message"
+#| msgid "fuzzy id of the message"
+msgctxt "context of the message"
+msgid "first line "
+"second line"
+msgstr "Erste Zeile "
+"Zweite Zeile"
+
+#: /vagrant/modules/monitoring/application/views/scripts/tactical/components/hostservicechecks.phtml:55
+#| msgid_plural "fuzzy_id_plural"
+msgid "id"
+msgid_plural "id_plural"
+msgstr[0] "string0"
+msgstr[1] "string1"
+
+#~ msgid "obsolete_id_line1 "
+#~ "obsolete_id_line2"
+#~ msgstr "obsolete_string_line1 "
+#~ "obsolete_string_line2"
+
+#~ msgid "id"
+#~ msgid_plural "id_plural_line1 "
+#~ "id_plural_line2"
+#~ msgstr[0] "string_line1 "
+#~ "string_line2"
+#~ msgstr[1] "string1"
