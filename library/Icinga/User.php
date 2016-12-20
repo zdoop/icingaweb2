@@ -4,6 +4,7 @@
 namespace Icinga;
 
 use DateTimeZone;
+use Icinga\Authentication\AdmissionLoader;
 use InvalidArgumentException;
 use Icinga\Application\Config;
 use Icinga\Authentication\Role;
@@ -546,5 +547,14 @@ class User
         }
 
         return $navigation;
+    }
+
+    /**
+     * Re-load permissions, restrictions and roles
+     */
+    public function __wakeup()
+    {
+        $admissionLoader = new AdmissionLoader();
+        $admissionLoader->applyRoles($this);
     }
 }
