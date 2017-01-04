@@ -1,9 +1,11 @@
 <?php
 /* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
-$applicationPath = realpath(dirname(__FILE__) . '/../../application/');
-$modulePath = realpath(dirname(__FILE__) . '/../../modules/');
-$libraryPath = realpath(dirname(__FILE__) . '/../../library/');
+$basePath = realpath(dirname(__FILE__) . '/../..');
+$applicationPath = $basePath . '/application/';
+$modulePath = $basePath . '/modules/';
+$libraryPath = $basePath . '/library/';
+
 $testLibraryPath = realpath(dirname(__FILE__) . '/library/');
 $configPath = realpath($libraryPath . '/../config');
 
@@ -18,9 +20,16 @@ if (!defined('ICINGA_LIBDIR')) {
 // This is needed to get the Zend Plugin loader working
 set_include_path(implode(PATH_SEPARATOR, array($libraryPath, get_include_path())));
 
-require_once 'Mockery/Loader.php';
-$mockeryLoader = new \Mockery\Loader;
-$mockeryLoader->register();
+// initialize composer autoload when existing
+if (file_exists($autoload = $basePath . '/vendor/autoload.php')) {
+    require_once($autoload);
+}
+
+if (! class_exists('\Mockery')) {
+    require_once 'Mockery/Loader.php';
+    $mockeryLoader = new \Mockery\Loader;
+    $mockeryLoader->register();
+}
 
 require_once($libraryPath . '/Icinga/Test/ClassLoader.php');
 
