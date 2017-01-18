@@ -43,13 +43,13 @@ class TranslatorTest extends BaseTestCase
         Translator::setupLocale('de_DE');
         $this->assertContains(
             setlocale(LC_ALL, 0),
-            array('de_DE', 'de_DE.UTF-8'),
+            array('de_DE', 'de_DE.UTF-8', 'de_DE.ISO-8859-1'),
             'Translator::setupLocale does not properly set up a given locale'
         );
     }
 
     /**
-     * @expectedException Icinga\Exception\IcingaException
+     * @expectedException \Icinga\Exception\IcingaException
      */
     public function testWhetherSetupLocaleThrowsAnExceptionWhenGivenAnInvalidLocale()
     {

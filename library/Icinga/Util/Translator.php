@@ -175,7 +175,12 @@ class Translator
      */
     public static function setupLocale($localeName)
     {
-        if (setlocale(LC_ALL, $localeName . '.UTF-8') === false && setlocale(LC_ALL, $localeName) === false) {
+        $localeList = array();
+        foreach (array('.UTF-8', '.ISO-8859-1', '') as $suffix) {
+            $localeList[] = $localeName . $suffix;
+        }
+        if (setlocale(LC_ALL, $localeList) === false) {
+            // could not set locale
             setlocale(LC_ALL, 'C'); // C == "use whatever is hardcoded"
             if ($localeName !== self::DEFAULT_LOCALE) {
                 throw new IcingaException(
