@@ -328,6 +328,10 @@ class ResourceConfigForm extends ConfigForm
      */
     public function isValidPartial(array $formData)
     {
+        if (! parent::isValidPartial($formData)) {
+            return false;
+        }
+
         if ($this->getElement('resource_validation')->isChecked() && parent::isValid($formData)) {
             $inspection = static::inspectResource($this);
             if ($inspection !== null) {
