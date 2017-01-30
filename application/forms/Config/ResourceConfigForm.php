@@ -188,10 +188,10 @@ class ResourceConfigForm extends ConfigForm
                         return false;
                     }
                 }
-                $this->add(static::transformEmptyValuesToNull($this->getValues()));
+                $this->add(static::transformEmptyValuesToNull($this->getValuesRecursive()));
                 $message = $this->translate('Resource "%s" has been successfully created');
             } else { // edit existing resource
-                $this->edit($resource, static::transformEmptyValuesToNull($this->getValues()));
+                $this->edit($resource, static::transformEmptyValuesToNull($this->getValuesRecursive()));
                 $message = $this->translate('Resource "%s" has been successfully changed');
             }
         } catch (InvalidArgumentException $e) {
@@ -200,7 +200,10 @@ class ResourceConfigForm extends ConfigForm
         }
 
         if ($this->save()) {
-            Notification::success(sprintf($message, $this->getElement('name')->getValue()));
+            Notification::success(sprintf(
+                $message,
+                $this->getSubForm('resource_form')->getElement('name')->getValue()
+            ));
         } else {
             return false;
         }
@@ -225,7 +228,7 @@ class ResourceConfigForm extends ConfigForm
             $configValues = $this->config->getSection($resource)->toArray();
             $configValues['name'] = $resource;
             $this->populate($configValues);
-            foreach ($this->getElements() as $element) {
+            foreach ($this->getElementsRecursive() as $element) {
                 if ($element->getType() === 'Zend_Form_Element_Password' && strlen($element->getValue())) {
                     $element->setValue(static::$dummyPassword);
                 }
@@ -290,7 +293,9 @@ class ResourceConfigForm extends ConfigForm
             $this->addElement($this->getForceCreationCheckbox());
         }
 
-        $this->addElements($this->getResourceForm($resourceType)->createElements($formData)->getElements());
+        $subForm = $this->getResourceForm($resourceType);
+        $this->addSubForm($subForm, 'resource_form');
+        $subForm->create($formData);
     }
 
     /**
@@ -303,7 +308,9 @@ class ResourceConfigForm extends ConfigForm
     public static function inspectResource(Form $form)
     {
         if ($form->getValue('type') !== 'ssh') {
-            $resource = ResourceFactory::createResource(new ConfigObject($form->getValues()));
+            $resource = ResourceFactory::createResource(new ConfigObject(
+                $form instanceof static ? $form->getValuesRecursive() : $form->getValues()
+            ));
             if ($resource instanceof Inspectable) {
                 return $resource->inspect();
             }
@@ -407,15 +414,22 @@ class ResourceConfigForm extends ConfigForm
     }
 
     /**
-     * {@inheritdoc}
+     * Like {@link getValues()}, but for all subforms
+     *
+     * @param   bool    $suppressArrayNotation
+     *
+     * @return  array
      */
-    public function getValues($suppressArrayNotation = false)
+    public function getValuesRecursive($suppressArrayNotation = false)
     {
-        $values = parent::getValues($suppressArrayNotation);
+        $values = array_merge(
+            $this->getValues($suppressArrayNotation),
+            $this->getSubForm('resource_form')->getValues($suppressArrayNotation)
+        );
         $resource = $this->request->getQuery('resource');
         if ($resource !== null && $this->config->hasSection($resource)) {
             $resourceConfig = $this->config->getSection($resource)->toArray();
-            foreach ($this->getElements() as $element) {
+            foreach ($this->getElementsRecursive() as $element) {
                 if ($element->getType() === 'Zend_Form_Element_Password') {
                     $name = $element->getName();
                     if (isset($values[$name]) && $values[$name] === static::$dummyPassword) {
@@ -430,6 +444,16 @@ class ResourceConfigForm extends ConfigForm
         }
 
         return $values;
+    }
+
+    /**
+     * Like {@link getElements()}, but for all subforms
+     *
+     * @return  array
+     */
+    protected function getElementsRecursive()
+    {
+        return array_merge($this->getElements(), $this->getSubForm('resource_form')->getElements());
     }
 
     /**
