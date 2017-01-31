@@ -188,10 +188,10 @@ class ResourceConfigForm extends ConfigForm
                         return false;
                     }
                 }
-                $this->add(static::transformEmptyValuesToNull($this->getValuesRecursive()));
+                $this->add(static::transformEmptyValuesToNull($this->getValues()));
                 $message = $this->translate('Resource "%s" has been successfully created');
             } else { // edit existing resource
-                $this->edit($resource, static::transformEmptyValuesToNull($this->getValuesRecursive()));
+                $this->edit($resource, static::transformEmptyValuesToNull($this->getValues()));
                 $message = $this->translate('Resource "%s" has been successfully changed');
             }
         } catch (InvalidArgumentException $e) {
@@ -308,9 +308,7 @@ class ResourceConfigForm extends ConfigForm
     public static function inspectResource(Form $form)
     {
         if ($form->getValue('type') !== 'ssh') {
-            $resource = ResourceFactory::createResource(new ConfigObject(
-                method_exists($form, 'getValuesRecursive') ? $form->getValuesRecursive() : $form->getValues()
-            ));
+            $resource = ResourceFactory::createResource(new ConfigObject($form->getValues()));
             if ($resource instanceof Inspectable) {
                 return $resource->inspect();
             }
@@ -418,18 +416,18 @@ class ResourceConfigForm extends ConfigForm
     }
 
     /**
-     * Like {@link getValues()}, but for all subforms
-     *
-     * @param   bool    $suppressArrayNotation
-     *
-     * @return  array
+     * {@inheritdoc}
      */
-    public function getValuesRecursive($suppressArrayNotation = false)
+    public function getValues($suppressArrayNotation = false)
     {
-        $values = array_merge(
-            $this->getValues($suppressArrayNotation),
-            $this->getSubForm('resource_form')->getValues($suppressArrayNotation)
-        );
+        $values = parent::getValues($suppressArrayNotation);
+        foreach ($values as $key => $value) {
+            if (is_array($value)) {
+                unset($values[$key]);
+                $values = array_merge($values, $value);
+            }
+        }
+
         $resource = $this->request->getQuery('resource');
         if ($resource !== null && $this->config->hasSection($resource)) {
             $resourceConfig = $this->config->getSection($resource)->toArray();

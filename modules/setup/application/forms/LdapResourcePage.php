@@ -154,17 +154,17 @@ class LdapResourcePage extends Form
     }
 
     /**
-     * Like {@link getValues()}, but for all subforms
-     *
-     * @param   bool    $suppressArrayNotation
-     *
-     * @return  array
+     * {@inheritdoc}
      */
-    public function getValuesRecursive($suppressArrayNotation = false)
+    public function getValues($suppressArrayNotation = false)
     {
-        return array_merge(
-            $this->getValues($suppressArrayNotation),
-            $this->getSubForm('resource_form')->getValues($suppressArrayNotation)
-        );
+        $values = parent::getValues($suppressArrayNotation);
+        foreach ($values as $key => $value) {
+            if (is_array($value)) {
+                unset($values[$key]);
+                $values = array_merge($values, $value);
+            }
+        }
+        return $values;
     }
 }
