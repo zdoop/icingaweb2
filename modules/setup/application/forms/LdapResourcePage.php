@@ -54,8 +54,9 @@ class LdapResourcePage extends Form
         }
 
         $resourceForm = new LdapResourceForm();
-        $this->addElements($resourceForm->createElements($formData)->getElements());
-        $this->getElement('name')->setValue('icingaweb_ldap');
+        $this->addSubForm($resourceForm, 'resource_form');
+        $resourceForm->create($formData);
+        $resourceForm->getElement('name')->setValue('icingaweb_ldap');
     }
 
     /**
@@ -124,6 +125,8 @@ class LdapResourcePage extends Form
             }
 
             $this->info($this->translate('The configuration has been successfully validated.'));
+        } elseif (isset($formData['btn_discover_domains'])) {
+            return parent::isValidPartial($formData);
         } elseif (! isset($formData['backend_validation'])) {
             // This is usually done by isValid(Partial), but as we're not calling any of these...
             $this->populate($formData);
@@ -147,6 +150,21 @@ class LdapResourcePage extends Form
                     'Check this to not to validate connectivity with the given directory service'
                 )
             )
+        );
+    }
+
+    /**
+     * Like {@link getValues()}, but for all subforms
+     *
+     * @param   bool    $suppressArrayNotation
+     *
+     * @return  array
+     */
+    public function getValuesRecursive($suppressArrayNotation = false)
+    {
+        return array_merge(
+            $this->getValues($suppressArrayNotation),
+            $this->getSubForm('resource_form')->getValues($suppressArrayNotation)
         );
     }
 }

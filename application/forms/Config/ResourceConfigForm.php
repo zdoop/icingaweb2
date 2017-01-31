@@ -309,7 +309,7 @@ class ResourceConfigForm extends ConfigForm
     {
         if ($form->getValue('type') !== 'ssh') {
             $resource = ResourceFactory::createResource(new ConfigObject(
-                $form instanceof static ? $form->getValuesRecursive() : $form->getValues()
+                method_exists($form, 'getValuesRecursive') ? $form->getValuesRecursive() : $form->getValues()
             ));
             if ($resource instanceof Inspectable) {
                 return $resource->inspect();

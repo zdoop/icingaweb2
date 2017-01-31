@@ -166,11 +166,7 @@ class LdapResourceForm extends Form
      */
     public function isValidPartial(array $formData)
     {
-        if (! parent::isValidPartial($formData)) {
-            return false;
-        }
-
-        if (isset($formData['btn_discover_domains'])) {
+        if (isset($formData['btn_discover_domains']) && parent::isValid($formData)) {
             $config = new ConfigObject(array_merge($formData, array('type' => 'ldap')));
             try {
                 $domains = $this->discoverDomains(ResourceFactory::createResource($config));
