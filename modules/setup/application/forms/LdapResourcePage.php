@@ -54,9 +54,8 @@ class LdapResourcePage extends Form
         }
 
         $resourceForm = new LdapResourceForm();
-        $this->addSubForm($resourceForm, 'resource_form');
-        $resourceForm->create($formData);
-        $resourceForm->getElement('name')->setValue('icingaweb_ldap');
+        $this->addElements($resourceForm->createElements($formData)->getElements());
+        $this->getElement('name')->setValue('icingaweb_ldap');
     }
 
     /**
@@ -125,8 +124,6 @@ class LdapResourcePage extends Form
             }
 
             $this->info($this->translate('The configuration has been successfully validated.'));
-        } elseif (isset($formData['btn_discover_domains'])) {
-            return parent::isValidPartial($formData);
         } elseif (! isset($formData['backend_validation'])) {
             // This is usually done by isValid(Partial), but as we're not calling any of these...
             $this->populate($formData);
@@ -151,20 +148,5 @@ class LdapResourcePage extends Form
                 )
             )
         );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getValues($suppressArrayNotation = false)
-    {
-        $values = parent::getValues($suppressArrayNotation);
-        foreach ($values as $key => $value) {
-            if (is_array($value)) {
-                unset($values[$key]);
-                $values = array_merge($values, $value);
-            }
-        }
-        return $values;
     }
 }
