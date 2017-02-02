@@ -18,13 +18,6 @@ use Icinga\Web\Navigation\Navigation;
 class User
 {
     /**
-     * Username
-     *
-     * @var string
-     */
-    protected $username;
-
-    /**
      * Firstname
      *
      * @var string
@@ -44,6 +37,13 @@ class User
      * @var string
      */
     protected $email;
+
+    /**
+     * {@link username} without {@link domain}
+     *
+     * @var string
+     */
+    protected $localpart;
 
     /**
      * Domain
@@ -279,7 +279,7 @@ class User
      */
     public function getUsername()
     {
-        return $this->username;
+        return $this->domain === null ? $this->localpart : $this->localpart . '@' . $this->domain;
     }
 
     /**
@@ -289,7 +289,18 @@ class User
      */
     public function setUsername($name)
     {
-        $this->username = $name;
+        $parts = explode('\\', $name, 2);
+        if (count($parts) === 2) {
+            list($this->domain, $this->localpart) = $parts;
+        } else {
+            $parts = explode('@', $name, 2);
+            if (count($parts) === 2) {
+                list($this->localpart, $this->domain) = $parts;
+            } else {
+                $this->localpart = $name;
+                $this->domain = null;
+            }
+        }
     }
 
     /**
@@ -354,7 +365,7 @@ class User
         if (filter_var($mail, FILTER_VALIDATE_EMAIL)) {
             $this->email = $mail;
         } else {
-            throw new InvalidArgumentException("Invalid mail given for user $this->username: $mail");
+            throw new InvalidArgumentException('Invalid mail given for user ' . $this->getUsername() . ': $mail');
         }
     }
 
@@ -378,6 +389,28 @@ class User
         return $this->domain;
     }
 
+    /**
+     * Get {@link localpart}
+     *
+     * @return string
+     */
+    public function getLocalpart()
+    {
+        return $this->localpart;
+    }
+
+    /**
+     * Set {@link localpart}
+     *
+     * @param   string $localpart
+     *
+     * @return  $this
+     */
+    public function setLocalpart($localpart)
+    {
+        $this->localpart = $localpart;
+        return $this;
+    }
 
     /**
      * Set additional information about user
