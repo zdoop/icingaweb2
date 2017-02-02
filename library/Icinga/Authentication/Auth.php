@@ -259,7 +259,7 @@ class Auth
         foreach ($this->getAuthChain() as $userBackend) {
             if ($userBackend instanceof ExternalBackend) {
                 if ($userBackend->authenticate($user)) {
-                    $this->setAuthenticated($user);
+                    $this->setAuthenticated($user->setDefaultDomainIfNeeded());
                     return true;
                 }
             }
@@ -294,7 +294,10 @@ class Auth
         }
         $user = new User($credentials[0]);
         $password = $credentials[1];
-        if ($this->getAuthChain()->setSkipExternalBackends(true)->authenticate($user, $password)) {
+        if ($this->getAuthChain()->setSkipExternalBackends(true)->authenticate(
+            $user->setDefaultDomainIfNeeded(),
+            $password
+        )) {
             $this->setAuthenticated($user, false);
             $user->setIsHttpUser(true);
             return true;

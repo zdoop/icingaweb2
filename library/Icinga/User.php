@@ -380,6 +380,23 @@ class User
     }
 
     /**
+     * If the user's domain is missing and a default domain is configured, set it as domain
+     *
+     * return $this
+     */
+    public function setDefaultDomainIfNeeded()
+    {
+        if ($this->domain === null) {
+            $defaultDomain = Config::app()->get('authentication', 'default_domain');
+            if ($defaultDomain !== null) {
+                $this->domain = $defaultDomain;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * Getter for domain
      *
      * @return  string

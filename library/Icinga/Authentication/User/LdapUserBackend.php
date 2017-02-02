@@ -375,7 +375,7 @@ class LdapUserBackend extends LdapRepository implements UserBackendInterface, In
         try {
             $userDn = $this
                 ->select()
-                ->where('user_name', str_replace('*', '', $user->getUsername()))
+                ->where('user_name', str_replace('*', '', $user->getLocalpart()))
                 ->getQuery()
                 ->setUsePagedResults(false)
                 ->fetchDn();

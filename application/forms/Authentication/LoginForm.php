@@ -86,9 +86,11 @@ class LoginForm extends Form
         $auth = Auth::getInstance();
         $authChain = $auth->getAuthChain();
         $authChain->setSkipExternalBackends(true);
+
         $user = new User($this->getElement('username')->getValue());
+
         $password = $this->getElement('password')->getValue();
-        $authenticated = $authChain->authenticate($user, $password);
+        $authenticated = $authChain->authenticate($user->setDefaultDomainIfNeeded(), $password);
         if ($authenticated) {
             $auth->setAuthenticated($user);
             $this->getResponse()->setRerenderLayout(true);

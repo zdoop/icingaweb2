@@ -72,7 +72,7 @@ class ChangePasswordForm extends Form
         $backend->update(
             $backend->getBaseTable(),
             array('password' => $this->getElement('new_password')->getValue()),
-            Filter::where('user_name', $this->Auth()->getUser()->getUsername())
+            Filter::where('user_name', $this->Auth()->getUser()->getLocalpart())
         );
         Notification::success($this->translate('Account updated'));
     }
