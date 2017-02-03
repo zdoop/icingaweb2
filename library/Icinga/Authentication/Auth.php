@@ -239,11 +239,21 @@ class Auth
     public function authenticateFromSession()
     {
         $this->user = Session::getSession()->get('user');
-        if ($this->user !== null && $this->user->isExternalUser()) {
-            list($originUsername, $field) = $this->user->getExternalUserInformation();
-            $username = ExternalBackend::getRemoteUser($field);
-            if ($username === null || $username !== $originUsername) {
-                $this->removeAuthorization();
+        if ($this->user !== null) {
+            if ($this->user->getDomain() === null) {
+                $defaultDomain = Config::app()->get('authentication', 'default_domain');
+                if ($defaultDomain !== null) {
+                    // The user logged in as "jdoe" while there was no default domain configured.
+                    // Then someone configured a default domain.
+                    $this->removeAuthorization();
+                }
+            }
+            if ($this->user !== null && $this->user->isExternalUser()) {
+                list($originUsername, $field) = $this->user->getExternalUserInformation();
+                $username = ExternalBackend::getRemoteUser($field);
+                if ($username === null || $username !== $originUsername) {
+                    $this->removeAuthorization();
+                }
             }
         }
     }
