@@ -9,6 +9,7 @@ use Icinga\Application\Icinga;
 use Icinga\Data\ConfigObject;
 use Icinga\Data\ResourceFactory;
 use Icinga\Exception\ConfigurationError;
+use Icinga\User;
 use Icinga\Util\ConfigAwareFactory;
 
 /**
@@ -230,5 +231,35 @@ class UserBackend implements ConfigAwareFactory
 
         $backend->setName($name);
         return $backend;
+    }
+
+    /**
+     * Return whether the given backend is responsible for authenticating the given user (based on their domains)
+     *
+     * @param   UserBackendInterface    $backend
+     * @param   User                    $user
+     *
+     * @return  bool
+     */
+    public static function isBackendResponsibleForUser(UserBackendInterface $backend, User $user)
+    {
+        $backendDomains = Config::app('authentication')->get($backend->getName(), 'domains');
+        $userDomain = $user->getDomain();
+
+        if ($userDomain === null) {
+            // The user logs in as "jdoe", not as "jdoe@example.com" and there's no default domain.
+            // The backend is only responsible if its domains are also missing.
+            return $backendDomains === null;
+        } else {
+            // The user logs in as "jdoe@example.com" or "jdoe" with a default domain being configured.
+            $userDomain = strtolower($userDomain);
+            if ($backendDomains === null) {
+                // The backend's domains are missing and we fall back to the default domain (if any).
+                $defaultDomain = Config::app()->get('authentication', 'default_domain');
+                return $defaultDomain !== null && $userDomain === strtolower($defaultDomain);
+            } else {
+                return in_array($userDomain, explode(',', strtolower($backendDomains)));
+            }
+        }
     }
 }

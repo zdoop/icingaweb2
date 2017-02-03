@@ -372,6 +372,10 @@ class LdapUserBackend extends LdapRepository implements UserBackendInterface, In
      */
     public function authenticate(User $user, $password)
     {
+        if (! UserBackend::isBackendResponsibleForUser($this, $user)) {
+            return false;
+        }
+
         try {
             $userDn = $this
                 ->select()

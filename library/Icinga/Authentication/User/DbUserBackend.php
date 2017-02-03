@@ -223,6 +223,10 @@ class DbUserBackend extends DbRepository implements UserBackendInterface, Inspec
      */
     public function authenticate(User $user, $password)
     {
+        if (! UserBackend::isBackendResponsibleForUser($this, $user)) {
+            return false;
+        }
+
         try {
             $passwordHash = $this->getPasswordHash($user->getLocalpart());
             $passwordSalt = $this->getSalt($passwordHash);
