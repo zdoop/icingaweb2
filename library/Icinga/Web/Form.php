@@ -816,7 +816,24 @@ class Form extends Zend_Form
      */
     public function onSuccess()
     {
-        return false;
+    }
+
+    /**
+     * Call {@link onSuccess()} of all subforms and the form itself (recursively, post-order)
+     *
+     * If any form's {@link onSuccess()} returns FALSE, return FALSE immediately. Otherwise return NULL.
+     *
+     * @return bool|null
+     */
+    protected function recursiveOnSuccess()
+    {
+        foreach ($this->getSubForms() as $subForm) {
+            if ($subForm instanceof Form && $subForm->recursiveOnSuccess() === false) {
+                return false;
+            }
+        }
+
+        return $this->onSuccess === null ? $this->onSuccess() : call_user_func($this->onSuccess, $this);
     }
 
     /**
@@ -1144,10 +1161,7 @@ class Form extends Zend_Form
             }
             $this->populate($formData); // Necessary to get isSubmitted() to work
             if (! $this->getSubmitLabel() || $this->isSubmitted()) {
-                if ($this->isValid($formData)
-                    && (($this->onSuccess !== null && false !== call_user_func($this->onSuccess, $this))
-                        || ($this->onSuccess === null && false !== $this->onSuccess()))
-                ) {
+                if ($this->isValid($formData) && $this->recursiveOnSuccess() !== false) {
                     if ($this->getIsApiTarget() || $this->getRequest()->isApiRequest()) {
                         // API targets and API requests will never redirect but immediately respond w/ JSON-encoded
                         // notifications
