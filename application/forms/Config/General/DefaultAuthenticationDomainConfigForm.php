@@ -3,6 +3,9 @@
 
 namespace Icinga\Forms\Config\General;
 
+use Icinga\Application\Config;
+use Icinga\User\Alternate;
+use Icinga\User\AlternationRules\SetDefaultDomainIfNeeded;
 use Icinga\Web\Form;
 
 /**
@@ -39,6 +42,37 @@ class DefaultAuthenticationDomainConfigForm extends Form
             )
         );
 
+        $defaultDomain = Config::app()->get('authentication', 'default_domain');
+        if ($defaultDomain === null) {
+            $this->addElement(
+                'checkbox',
+                'rename_users',
+                array(
+                    'label'         => $this->translate('Migrate users'),
+                    'description'   => $this->translate(
+                        'Check this box to rename all users in the configuration without any domain so that they are'
+                        . ' in the default domain (e.g.: "jdoe" becomes "jdoe@example.com"). If you omit this,'
+                        . ' your users will loose e.g. their preferences, dashboards and role memberships!'
+                    ),
+                    'value'         => true,
+                    'ignore'        => true
+                )
+            );
+        }
+
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function onSuccess()
+    {
+        if ($this->getElement('rename_users')->getValue()) {
+            $defaultDomain = $this->getElement('authentication_default_domain')->getValue();
+            if ($defaultDomain !== '') {
+                Alternate::allUsers(new SetDefaultDomainIfNeeded($defaultDomain));
+            }
+        }
     }
 }
