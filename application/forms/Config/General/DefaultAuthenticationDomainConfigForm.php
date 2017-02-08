@@ -68,7 +68,8 @@ class DefaultAuthenticationDomainConfigForm extends Form
      */
     public function onSuccess()
     {
-        if ($this->getElement('rename_users')->getValue()) {
+        $renameUsers = $this->getElement('rename_users');
+        if ($renameUsers !== null && $renameUsers->getValue()) {
             $defaultDomain = $this->getElement('authentication_default_domain')->getValue();
             if ($defaultDomain !== '') {
                 Alternate::allUsers(new SetDefaultDomainIfNeeded($defaultDomain));
