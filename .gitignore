@@ -4,6 +4,7 @@
 # Except those related to git and vagrant
 !.git*
 !.puppet*
+!.travis.yml
 
 # Exclude application log files
 var/log/*

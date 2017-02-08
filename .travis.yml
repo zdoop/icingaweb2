@@ -1,0 +1,36 @@
+language: php
+sudo: required
+
+php:
+  - '5.3'
+  - '5.4'
+  - '5.5'
+  - '5.6'
+  - '7.0'
+  - '7.1'
+
+services:
+  - mysql
+  - postgresql
+
+cache:
+  directories:
+    - vendor
+
+branches:
+  only:
+  - master
+  - /^v\d/
+
+notifications:
+  email: false
+
+before_install:
+  - sudo locale-gen de_DE fr_FR
+
+before_script:
+  - composer install
+  - composer update
+
+script:
+  - ./vendor/bin/phpunit -c modules/test/phpunit.xml
