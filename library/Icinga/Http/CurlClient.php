@@ -137,8 +137,12 @@ class CurlClient implements ClientInterface
             CURLOPT_MAXREDIRS       => $this->getMaximumRedirects()
         ];
 
-        if ($request->getPort() !== null) {
+        if ($request->getPort()) {
             $options[CURLOPT_PORT] = $request->getPort();
+        }
+
+        if ($request->getBody()) {
+            $options[CURLOPT_POSTFIELDS] = $request->getBody();
         }
 
         if ($request->getUsername() && $request->getPassword()) {

@@ -101,6 +101,22 @@ interface RequestInterface
     public function setHeaders(array $headers);
 
     /**
+     * Set the body of this request
+     *
+     * @param   string  $body
+     *
+     * @return  $this
+     */
+    public function setBody($body);
+
+    /**
+     * Return the body of this request
+     *
+     * @return  string
+     */
+    public function getBody();
+
+    /**
      * Return HTTP version
      *
      * @return  string

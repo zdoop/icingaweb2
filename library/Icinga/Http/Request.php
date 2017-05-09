@@ -37,6 +37,13 @@ class Request implements RequestInterface
     protected $headers;
 
     /**
+     * The body of this request
+     *
+     * @var string
+     */
+    protected $body;
+
+    /**
      * HTTP version to use
      *
      * @var string
@@ -162,6 +169,23 @@ class Request implements RequestInterface
     {
         $this->headers = $headers;
         return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setBody($body)
+    {
+        $this->body = $body;
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getBody()
+    {
+        return $this->body;
     }
 
     /**
