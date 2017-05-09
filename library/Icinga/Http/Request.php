@@ -44,14 +44,6 @@ class Request implements RequestInterface
     protected $protocolVersion = '1.1';
 
     /**
-     * TODO(jem): Okay to put a '?' here?
-     * Should the SSL peer be verified?
-     *
-     * @var bool
-     */
-    protected $verifySSLPeer = true;
-
-    /**
      * Username for basic authentication
      *
      * @var string
@@ -187,23 +179,6 @@ class Request implements RequestInterface
     {
         $this->protocolVersion = $version;
         return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setVerifySSLPeer($value)
-    {
-        $this->verifySSLPeer = $value;
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getVerifySSLPeer()
-    {
-        return $this->verifySSLPeer;
     }
 
     /**

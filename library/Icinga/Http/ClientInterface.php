@@ -41,6 +41,22 @@ interface ClientInterface
     public function getTimeout();
 
     /**
+     * Set to ignore SSL certificates
+     *
+     * @param   bool    $ignore
+     *
+     * @return  $this
+     */
+    public function setIgnoreSSL($ignore);
+
+    /**
+     * Return whether to ignore SSL certificates
+     *
+     * @return  bool
+     */
+    public function getIgnoreSSL();
+
+    /**
      * Send a request
      *
      * @param   RequestInterface    $request

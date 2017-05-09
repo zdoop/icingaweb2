@@ -25,6 +25,13 @@ class CurlClient implements ClientInterface
     protected $maximumRedirects = 20;
 
     /**
+     * Whether to ignore SSL certificates
+     *
+     * @var bool
+     */
+    protected $ignoreSSL = false;
+
+    /**
      * Return user agent
      *
      * @return  string
@@ -75,6 +82,23 @@ class CurlClient implements ClientInterface
     /**
      * {@inheritdoc}
      */
+    public function setIgnoreSSL($ignoreSSL)
+    {
+        $this->ignoreSSL = $ignoreSSL;
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getIgnoreSSL()
+    {
+        return $this->ignoreSSL;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function sendRequest(RequestInterface $request)
     {
         $session = curl_init($request->getUrl());
@@ -97,11 +121,15 @@ class CurlClient implements ClientInterface
                 $protocolVersion = CURL_HTTP_VERSION_1_0;
         }
 
+        if ($this->getIgnoreSSL()) {
+            $options[CURLOPT_SSL_VERIFYPEER] = 0;
+            $options[CURLOPT_SSL_VERIFYHOST] = 0;
+        }
+
         $options = [
             CURLOPT_USERAGENT       => $this->getAgent(),
             CURLOPT_HTTPHEADER      => $headers,
             CURLOPT_CUSTOMREQUEST   => $request->getMethod(),
-            CURLOPT_SSL_VERIFYPEER  => $request->getVerifySSLPeer(),
             CURLOPT_FOLLOWLOCATION  => 1,
             CURLOPT_RETURNTRANSFER  => 1,
             CURLOPT_HTTP_VERSION    => $protocolVersion,

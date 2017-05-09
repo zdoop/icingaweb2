@@ -117,22 +117,6 @@ interface RequestInterface
     public function setProtocolVersion($version);
 
     /**
-     * Set if the SSL peer should be verified
-     *
-     * @param   bool    $value
-     *
-     * @return  $this
-     */
-    public function setVerifySSLPeer($value);
-
-    /**
-     * Return if the SSL peer should be verified
-     *
-     * @return  bool
-     */
-    public function getVerifySSLPeer();
-
-    /**
      * Set username for basic authentication
      *
      * @param   string  $username
