@@ -4,8 +4,11 @@ namespace Icinga\Http;
 
 use Icinga\Application\Version;
 
-class Client implements ClientInterface
+class CurlClient implements ClientInterface
 {
+    protected $timeout = 10;
+    protected $maximumRedirects = 20;
+
     protected function getAgent()
     {
         $curlVersion = curl_version();
@@ -13,6 +16,28 @@ class Client implements ClientInterface
         $defaultAgent .= ' curl/' . $curlVersion['version'];
 
         return $defaultAgent;
+    }
+
+    public function setMaximumRedirects($maximum)
+    {
+        $this->maximumRedirects = $maximum;
+        return $this;
+    }
+
+    public function getMaximumRedirects()
+    {
+        return $this->maximumRedirects;
+    }
+
+    public function setTimeout($timeout)
+    {
+        $this->timeout = $timeout;
+        return $this;
+    }
+
+    public function getTimeout()
+    {
+        return $this->timeout;
     }
 
     public function sendRequest(RequestInterface $request)
@@ -37,22 +62,30 @@ class Client implements ClientInterface
                 $protocolVersion = CURL_HTTP_VERSION_1_0;
         }
 
-        if ($request->getPort() !== null) {
-            curl_setopt($session, CURLOPT_PORT, $request->getPort());
-        }
-
-        curl_setopt_array($session, [
+        $options = [
             CURLOPT_USERAGENT       => $this->getAgent(),
             CURLOPT_HTTPHEADER      => $headers,
             CURLOPT_CUSTOMREQUEST   => $request->getMethod(),
             CURLOPT_SSL_VERIFYPEER  => $request->getVerifySSLPeer(),
             CURLOPT_FOLLOWLOCATION  => 1,
             CURLOPT_RETURNTRANSFER  => 1,
-            CURLOPT_HTTP_VERSION    => $protocolVersion
-        ]);
+            CURLOPT_HTTP_VERSION    => $protocolVersion,
+            CURLOPT_TIMEOUT         => $this->getTimeout(),
+            CURLOPT_MAXREDIRS       => $this->getMaximumRedirects()
+        ];
+
+        if ($request->getPort() !== null) {
+            $options[CURLOPT_PORT] = $request->getPort();
+        }
+
+        if ($request->getUsername() && $request->getPassword()) {
+            $options[CURLOPT_USERPWD] = $request->getUsername() . ':' . $request->getPassword();
+            $options[CURLOPT_HTTPAUTH] = CURLAUTH_BASIC;
+        }
+
 
         $responseHeaders = [];
-        curl_setopt($session, CURLOPT_HEADERFUNCTION, function($_, $header) use (&$responseHeaders)
+        $options[CURLOPT_HEADERFUNCTION] = function($_, $header) use (&$responseHeaders)
         {
             if (! trim($header)) {
                 return strlen($header);
@@ -65,7 +98,9 @@ class Client implements ClientInterface
                 $responseHeaders[$headerParts[0]] = trim($headerParts[1]);
             }
             return strlen($header);
-        });
+        };
+
+        curl_setopt_array($session, $options);
 
         $body = curl_exec($session);
         if ($body === false) {

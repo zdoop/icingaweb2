@@ -11,6 +11,8 @@ class Request implements RequestInterface
     protected $headers;
     protected $protocolVersion = '1.1';
     protected $verifySSLPeer = true;
+    protected $username;
+    protected $password;
 
     public function __construct($url, $method = 'GET', $headers = [])
     {
@@ -101,10 +103,32 @@ class Request implements RequestInterface
         return $this->verifySSLPeer;
     }
 
+    public function setUsername($username)
+    {
+        $this->username = $username;
+        return $this;
+    }
+
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    public function setPassword($password)
+    {
+        $this->password = $password;
+        return $this;
+    }
+
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
     public function send(ClientInterface $client = null)
     {
         if (! $client) {
-            $client = new Client();
+            $client = new CurlClient();
         }
         return $client->sendRequest($this);
     }

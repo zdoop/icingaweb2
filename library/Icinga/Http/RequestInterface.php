@@ -24,6 +24,10 @@ interface RequestInterface
     public function setProtocolVersion($version);
     public function setVerifySSLPeer($value);
     public function getVerifySSLPeer();
+    public function setUsername($username);
+    public function getUsername();
+    public function setPassword($password);
+    public function getPassword();
     public function send(ClientInterface $client = null);
     // auth
 }
