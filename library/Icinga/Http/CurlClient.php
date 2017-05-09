@@ -1,14 +1,34 @@
 <?php
+/* Icinga Web 2 | (c) 2017 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Http;
 
 use Icinga\Application\Version;
 
+/**
+ * HTTP client that uses cURL
+ */
 class CurlClient implements ClientInterface
 {
+    /**
+     * Time in seconds before timeout
+     *
+     * @var int
+     */
     protected $timeout = 10;
+
+    /**
+     * Maximum amount of redirects to follow
+     *
+     * @var int
+     */
     protected $maximumRedirects = 20;
 
+    /**
+     * Return user agent
+     *
+     * @return  string
+     */
     protected function getAgent()
     {
         $curlVersion = curl_version();
@@ -18,28 +38,43 @@ class CurlClient implements ClientInterface
         return $defaultAgent;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setMaximumRedirects($maximum)
     {
         $this->maximumRedirects = $maximum;
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getMaximumRedirects()
     {
         return $this->maximumRedirects;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function setTimeout($timeout)
     {
         $this->timeout = $timeout;
         return $this;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getTimeout()
     {
         return $this->timeout;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function sendRequest(RequestInterface $request)
     {
         $session = curl_init($request->getUrl());
