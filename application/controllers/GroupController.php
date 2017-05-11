@@ -5,6 +5,8 @@ namespace Icinga\Controllers;
 
 use Exception;
 use Icinga\Application\Logger;
+use Icinga\Authentication\User\UserBackend;
+use Icinga\Authentication\User\UserBackendInterface;
 use Icinga\Data\DataArray\ArrayDatasource;
 use Icinga\Data\Filter\Filter;
 use Icinga\Data\Reducible;
@@ -298,6 +300,9 @@ class GroupController extends AuthBackendController
         foreach ($this->loadUserBackends('Icinga\Data\Selectable') as $backend) {
             try {
                 foreach ($backend->select(array('user_name')) as $row) {
+                    if ($backend instanceof UserBackendInterface) {
+                        $row->user_name = UserBackend::getUserFromBackend($row->user_name, $backend)->getUsername();
+                    }
                     $users[] = $row;
                 }
             } catch (Exception $e) {

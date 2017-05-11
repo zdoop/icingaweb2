@@ -87,6 +87,7 @@ class UserController extends AuthBackendController
         $userName = $this->params->getRequired('user');
         $backend = $this->getUserBackend($this->params->getRequired('backend'));
 
+        $userObj = UserBackend::getUserFromBackend($userName, $backend);
         $user = $backend->select(array(
             'user_name',
             'is_active',
@@ -94,10 +95,10 @@ class UserController extends AuthBackendController
             'last_modified'
         ))->where('user_name', $userName)->fetchRow();
         if ($user === false) {
-            $this->httpNotFound(sprintf($this->translate('User "%s" not found'), $userName));
+            $this->httpNotFound(sprintf($this->translate('User "%s" not found'), $userObj->getUsername()));
         }
 
-        $memberships = $this->loadMemberships(new User($userName))->select();
+        $memberships = $this->loadMemberships($userObj)->select();
 
         $this->setupFilterControl(
             $memberships,

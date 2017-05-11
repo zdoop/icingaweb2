@@ -3,6 +3,7 @@
 
 namespace Icinga\Authentication\UserGroup;
 
+use Icinga\Authentication\User\ExternalBackend;
 use Icinga\Authentication\User\UserBackend;
 use Icinga\Authentication\User\LdapUserBackend;
 use Icinga\Application\Logger;
@@ -632,6 +633,13 @@ class LdapUserGroupBackend extends LdapRepository implements UserGroupBackendInt
      */
     public function getMemberships(User $user)
     {
+        if (! UserBackend::isBackendResponsibleForUser(
+            $this->userBackend === null ? new ExternalBackend(new ConfigObject()) : $this->userBackend,
+            $user
+        )) {
+            return array();
+        }
+
         if ($this->isMemberAttributeAmbiguous()) {
             $queryValue = $user->getLocalpart();
         } elseif (($queryValue = $user->getAdditional('ldap_dn')) === null) {
