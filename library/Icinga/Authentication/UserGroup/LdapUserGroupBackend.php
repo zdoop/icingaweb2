@@ -633,12 +633,12 @@ class LdapUserGroupBackend extends LdapRepository implements UserGroupBackendInt
     public function getMemberships(User $user)
     {
         if ($this->isMemberAttributeAmbiguous()) {
-            $queryValue = $user->getUsername();
+            $queryValue = $user->getLocalpart();
         } elseif (($queryValue = $user->getAdditional('ldap_dn')) === null) {
             $userQuery = $this->ds
                 ->select()
                 ->from($this->userClass)
-                ->where($this->userNameAttribute, $user->getUsername())
+                ->where($this->userNameAttribute, $user->getLocalpart())
                 ->setBase($this->userBaseDn)
                 ->setUsePagedResults(false);
             if ($this->userFilter) {
