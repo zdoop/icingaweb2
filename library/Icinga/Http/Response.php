@@ -8,19 +8,7 @@ namespace Icinga\Http;
  */
 class Response implements ResponseInterface
 {
-    /**
-     * Headers of this response
-     *
-     * @var array
-     */
-    protected $headers = array();
-
-    /**
-     * Body of this response
-     *
-     * @var string
-     */
-    protected $body;
+    use MessageTrait;
 
     /**
      * Status code of this response
@@ -32,47 +20,36 @@ class Response implements ResponseInterface
     /**
      * Response constructor.
      *
+     * @param   int     $statusCode
      * @param   array   $headers
      * @param   string  $body
-     * @param   int     $statusCode
      */
-    public function __construct(array $headers, $body, $statusCode)
+    public function __construct($statusCode, array $headers, $body)
     {
-        $this->headers      = $headers;
-        $this->body         = $body;
-        $this->statusCode   = $statusCode;
+        $this->statusCode = $statusCode;
+        $this->setHeaders($headers);
+        $this->body = $body;
     }
 
     /**
-     * {@inheritdoc}
+     * Overwrite all headers
+     *
+     * @param   array   $headers
      */
-    public function getHeader($header)
+    protected function setHeaders($headers)
     {
-        return $this->headers[$header];
-    }
+        $names = array_keys($headers);
+        $lowered = array_map('strtolower', $names);
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getHeaders()
-    {
-        return $this->headers;
-    }
+        $this->headerNames = array_combine(
+            $lowered,
+            $names
+        );
 
-    /**
-     * {@inheritdoc}
-     */
-    public function hasHeader($header)
-    {
-        return isset($this->headers[$header]);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getBody()
-    {
-        return $this->body;
+        $this->headerValues = array_combine(
+            $lowered,
+            $headers
+        );
     }
 
     /**

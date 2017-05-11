@@ -3,10 +3,8 @@
 
 namespace Icinga\Http;
 
-/**
- * Interface for HTTP responses
- */
-interface ResponseInterface extends MessageInterface
+
+interface MessageInterface
 {
     /**
      * Checks if a specific header exists
@@ -20,7 +18,7 @@ interface ResponseInterface extends MessageInterface
     /**
      * Return a specific header
      *
-     * @param   $header
+     * @param   string  $header
      *
      * @return  string
      */
@@ -34,16 +32,9 @@ interface ResponseInterface extends MessageInterface
     public function getHeaders();
 
     /**
-     * Return the body
+     * Return the body of this request
      *
-     * @return  array
+     * @return  string
      */
     public function getBody();
-
-    /**
-     * Return the HTTP status code
-     *
-     * @return mixed
-     */
-    public function getStatusCode();
 }

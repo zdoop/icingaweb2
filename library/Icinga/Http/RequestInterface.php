@@ -6,7 +6,7 @@ namespace Icinga\Http;
 /**
  * Interface for HTTP requests
  */
-interface RequestInterface
+interface RequestInterface extends MessageInterface
 {
     /**
      * Return URL to send the request to
@@ -25,22 +25,6 @@ interface RequestInterface
     public function setUrl($url);
 
     /**
-     * Return the port to be added to the URL
-     *
-     * @return  int
-     */
-    public function getPort();
-
-    /**
-     * Set the port to be added to the URL
-     *
-     * @param   int     $port
-     *
-     * @return  $this
-     */
-    public function setPort($port);
-
-    /**
      * Return the HTTP method in use
      *
      * @return  string
@@ -55,66 +39,6 @@ interface RequestInterface
      * @return  $this
      */
     public function setMethod($method);
-
-    /**
-     * Return a specific header
-     *
-     * @param   $header
-     *
-     * @return  string
-     */
-    public function getHeader($header);
-
-    /**
-     * Return all headers
-     *
-     * @return  array
-     */
-    public function getHeaders();
-
-    /**
-     * Checks if a specific header exists
-     *
-     * @param   string  $header
-     *
-     * @return  bool
-     */
-    public function hasHeader($header);
-
-    /**
-     * Set a specific header
-     *
-     * @param   string  $header
-     * @param   string  $value
-     *
-     * @return  $this
-     */
-    public function setHeader($header, $value);
-
-    /**
-     * Overwrite all headers
-     *
-     * @param   array   $headers
-     *
-     * @return  $this
-     */
-    public function setHeaders(array $headers);
-
-    /**
-     * Set the body of this request
-     *
-     * @param   string  $body
-     *
-     * @return  $this
-     */
-    public function setBody($body);
-
-    /**
-     * Return the body of this request
-     *
-     * @return  string
-     */
-    public function getBody();
 
     /**
      * Return HTTP version

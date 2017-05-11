@@ -11,25 +11,18 @@ use Icinga\Application\Version;
 class CurlClient implements ClientInterface
 {
     /**
-     * Time in seconds before timeout
+     * Additional cURL options
      *
-     * @var int
+     * @var array
      */
-    protected $timeout = 10;
+    protected $options = [];
 
     /**
-     * Maximum amount of redirects to follow
+     * Temporary storage for response headers
      *
-     * @var int
+     * @var array
      */
-    protected $maximumRedirects = 20;
-
-    /**
-     * Whether to ignore SSL certificates
-     *
-     * @var bool
-     */
-    protected $ignoreSSL = false;
+    protected $responseHeaders = [];
 
     /**
      * Return user agent
@@ -46,99 +39,74 @@ class CurlClient implements ClientInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Set additional cURL options
+     *
+     * @param   array   $options
+     *
+     * @return  $this
      */
-    public function setMaximumRedirects($maximum)
+    public function setCurlOptions(array $options)
     {
-        $this->maximumRedirects = $maximum;
+        $this->options = $options;
         return $this;
     }
 
     /**
-     * {@inheritdoc}
+     * Return additional cURL options
+     *
+     * @return array
      */
-    public function getMaximumRedirects()
+    public function getCurlOptions()
     {
-        return $this->maximumRedirects;
+        return $this->options;
     }
 
     /**
-     * {@inheritdoc}
+     * Prepare and return a cURL handle based on the given request and clients' cURL options
+     *
+     * @param   RequestInterface    $request
+     *
+     * @return  resource
      */
-    public function setTimeout($timeout)
+    public function prepareHandle(RequestInterface $request)
     {
-        $this->timeout = $timeout;
-        return $this;
-    }
+        $ch = curl_init($request->getUrl());
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getTimeout()
-    {
-        return $this->timeout;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setIgnoreSSL($ignoreSSL)
-    {
-        $this->ignoreSSL = $ignoreSSL;
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getIgnoreSSL()
-    {
-        return $this->ignoreSSL;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function sendRequest(RequestInterface $request)
-    {
-        $session = curl_init($request->getUrl());
-
-        // Bypass Except: 100-continue timeouts
-        $headers = array('Except:');
+        // Bypass Expect: 100-continue timeouts
+        $headers = [];
         foreach ($request->getHeaders() as $key => $value) {
+            if (strtolower($key) === 'expect') {
+                continue;
+            }
             $headers[] = $key . ': ' . $value;
         }
 
-        $protocolVersion = null;
-        switch ($request->getProtocolVersion()) {
-            case '2.0':
-                $protocolVersion = CURL_HTTP_VERSION_2;
-                break;
-            case '1.1':
-                $protocolVersion = CURL_HTTP_VERSION_1_1;
-                break;
-            default:
-                $protocolVersion = CURL_HTTP_VERSION_1_0;
-        }
-
-        if ($this->getIgnoreSSL()) {
-            $options[CURLOPT_SSL_VERIFYPEER] = 0;
-            $options[CURLOPT_SSL_VERIFYHOST] = 0;
-        }
+        $constantOptions = [
+            CURLOPT_USERAGENT       => $this->getAgent(),
+            CURLOPT_RETURNTRANSFER  => 1
+        ];
 
         $options = [
-            CURLOPT_USERAGENT       => $this->getAgent(),
             CURLOPT_HTTPHEADER      => $headers,
             CURLOPT_CUSTOMREQUEST   => $request->getMethod(),
             CURLOPT_FOLLOWLOCATION  => 1,
-            CURLOPT_RETURNTRANSFER  => 1,
-            CURLOPT_HTTP_VERSION    => $protocolVersion,
-            CURLOPT_TIMEOUT         => $this->getTimeout(),
-            CURLOPT_MAXREDIRS       => $this->getMaximumRedirects()
         ];
 
-        if ($request->getPort()) {
-            $options[CURLOPT_PORT] = $request->getPort();
+        if ($request->getProtocolVersion()) {
+            $protocolVersion = null;
+            switch ($request->getProtocolVersion()) {
+                /*case '2.0':
+                    TODO(NoH): only available from php 7.0.7 and up => if PHP version is lower, throw exception
+                    $protocolVersion = CURL_HTTP_VERSION_2;
+                    break;*/
+                case '1.1':
+                    $protocolVersion = CURL_HTTP_VERSION_1_1;
+                    break;
+                default:
+                    $protocolVersion = CURL_HTTP_VERSION_1_0;
+            }
+
+            $options[CURLOPT_HTTP_VERSION] = $protocolVersion;
         }
 
         if ($request->getBody()) {
@@ -150,33 +118,65 @@ class CurlClient implements ClientInterface
             $options[CURLOPT_HTTPAUTH] = CURLAUTH_BASIC;
         }
 
+        $constantOptions[CURLOPT_HEADERFUNCTION] = function($_, $header) {
+            $size = strlen($header);
 
-        $responseHeaders = [];
-        $options[CURLOPT_HEADERFUNCTION] = function($_, $header) use (&$responseHeaders)
-        {
-            if (! trim($header)) {
-                return strlen($header);
+            if (! trim($header) || strpos($header, 'HTTP/') === 0) {
+                return $size;
             }
 
-            $headerParts = explode(': ', $header);
-            if (strpos($headerParts[0], 'HTTP/') === 0) {
-                $responseHeaders = [];
-            } else {
-                $responseHeaders[$headerParts[0]] = trim($headerParts[1]);
-            }
-            return strlen($header);
+            list($key, $value) = $this->parseHeaderLine($header);
+            $this->responseHeaders[$key] = $value;
+
+            return $size;
         };
 
-        curl_setopt_array($session, $options);
+        $options = array_replace($options, $this->getCurlOptions());
+        $options = array_replace($options, $constantOptions);
 
-        $body = curl_exec($session);
+        curl_setopt_array($ch, $options);
+
+        return $ch;
+    }
+
+    /**
+     * Split header line into a key and value pair
+     *
+     * @param   string    $header
+     *
+     * @return  array
+     */
+    protected function parseHeaderLine($header)
+    {
+        return explode(': ', $header, 2);
+    }
+
+    /**
+     * Execute a cURL handle and return the response as response object
+     *
+     * @param   resource    $ch
+     *
+     * @return  ResponseInterface
+     */
+    public function executeHandle($ch)
+    {
+        $body = curl_exec($ch);
         if ($body === false) {
-            var_dump(curl_error($session));
+            throw new HttpException(curl_error($ch));
         }
 
-        $responseObject = new Response($responseHeaders, $body, curl_getinfo($session, CURLINFO_HTTP_CODE));
-        curl_close($session);
+        $response = new Response(curl_getinfo($ch, CURLINFO_HTTP_CODE), $this->responseHeaders, $body);
+        curl_close($ch);
 
-        return $responseObject;
+        return $response;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function sendRequest(RequestInterface $request)
+    {
+        $ch = $this->prepareHandle($request);
+        return $this->executeHandle($ch);
     }
 }

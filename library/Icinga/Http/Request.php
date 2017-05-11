@@ -8,6 +8,8 @@ namespace Icinga\Http;
  */
 class Request implements RequestInterface
 {
+    use MessageTrait;
+
     /**
      * URL to send the request to
      *
@@ -16,32 +18,11 @@ class Request implements RequestInterface
     protected $url;
 
     /**
-     * port to be added to the URL
-     *
-     * @var int
-     */
-    protected $port;
-
-    /**
      * HTTP method to use
      *
      * @var string
      */
     protected $method;
-
-    /**
-     * Headers for this request
-     *
-     * @var array
-     */
-    protected $headers;
-
-    /**
-     * The body of this request
-     *
-     * @var string
-     */
-    protected $body;
 
     /**
      * HTTP version to use
@@ -71,11 +52,66 @@ class Request implements RequestInterface
      * @param   string    $method
      * @param   array     $headers
      */
-    public function __construct($url, $method = 'GET', $headers = [])
+    public function __construct($method, $url, $headers = [])
     {
-        $this->url = $url;
         $this->method = $method;
+        $this->url = $url;
         $this->headers = $headers;
+    }
+
+    /**
+     * Set a specific header
+     *
+     * @param   string  $header
+     * @param   string  $value
+     *
+     * @return  $this
+     */
+    public function setHeader($header, $value)
+    {
+        $lowered = strtolower($header);
+        $this->headerNames[$lowered] = $header;
+        $this->headerValues[$lowered] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Overwrite all headers
+     *
+     * @param   array   $headers
+     *
+     * @return  $this
+     */
+    public function setHeaders(array $headers)
+    {
+        $names = array_keys($headers);
+        $lowered = array_map('strtolower', $names);
+
+        $this->headerNames = array_combine(
+            $lowered,
+            $names
+        );
+
+        $this->headerValues = array_combine(
+            $lowered,
+            $headers
+        );
+
+        return $this;
+    }
+
+    /**
+     * Set the body of this request
+     *
+     * @param   string  $body
+     *
+     * @return  $this
+     */
+    public function setBody($body)
+    {
+        $this->body = $body;
+        return $this;
     }
 
     /**
@@ -98,23 +134,6 @@ class Request implements RequestInterface
     /**
      * {@inheritdoc}
      */
-    public function getPort()
-    {
-        return $this->port;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setPort($port)
-    {
-        $this->port = $port;
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getMethod()
     {
         return $this->method;
@@ -127,65 +146,6 @@ class Request implements RequestInterface
     {
         $this->method = $method;
         return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getHeader($header)
-    {
-        return $this->headers[$header];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getHeaders()
-    {
-        return $this->headers;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function hasHeader($header)
-    {
-        return isset($this->headers[$header]);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setHeader($header, $value)
-    {
-        $this->headers[$header] = $value;
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setHeaders(array $headers)
-    {
-        $this->headers = $headers;
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setBody($body)
-    {
-        $this->body = $body;
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getBody()
-    {
-        return $this->body;
     }
 
     /**
