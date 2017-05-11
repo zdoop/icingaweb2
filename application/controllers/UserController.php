@@ -5,6 +5,7 @@ namespace Icinga\Controllers;
 
 use Exception;
 use Icinga\Application\Logger;
+use Icinga\Authentication\User\UserBackend;
 use Icinga\Data\DataArray\ArrayDatasource;
 use Icinga\Exception\ConfigurationError;
 use Icinga\Exception\NotFoundError;
@@ -184,7 +185,10 @@ class UserController extends AuthBackendController
         try {
             $form->edit($userName)->handleRequest();
         } catch (NotFoundError $_) {
-            $this->httpNotFound(sprintf($this->translate('User "%s" not found'), $userName));
+            $this->httpNotFound(sprintf(
+                $this->translate('User "%s" not found'),
+                UserBackend::getUserFromBackend($userName, $backend)->getUsername()
+            ));
         }
 
         $this->renderForm($form, $this->translate('Update User'));
@@ -206,7 +210,10 @@ class UserController extends AuthBackendController
         try {
             $form->remove($userName)->handleRequest();
         } catch (NotFoundError $_) {
-            $this->httpNotFound(sprintf($this->translate('User "%s" not found'), $userName));
+            $this->httpNotFound(sprintf(
+                $this->translate('User "%s" not found'),
+                UserBackend::getUserFromBackend($userName, $backend)->getUsername()
+            ));
         }
 
         $this->renderForm($form, $this->translate('Remove User'));
@@ -222,7 +229,10 @@ class UserController extends AuthBackendController
         $backend = $this->getUserBackend($this->params->getRequired('backend'));
 
         if ($backend->select()->where('user_name', $userName)->count() === 0) {
-            $this->httpNotFound(sprintf($this->translate('User "%s" not found'), $userName));
+            $this->httpNotFound(sprintf(
+                $this->translate('User "%s" not found'),
+                UserBackend::getUserFromBackend($userName, $backend)->getUsername()
+            ));
         }
 
         $backends = $this->loadUserGroupBackends('Icinga\Data\Extensible');
@@ -234,7 +244,7 @@ class UserController extends AuthBackendController
 
         $form = new CreateMembershipForm();
         $form->setBackends($backends)
-            ->setUsername($userName)
+            ->setUser(UserBackend::getUserFromBackend($userName, $backend))
             ->setRedirectUrl(Url::fromPath('user/show', array('backend' => $backend->getName(), 'user' => $userName)))
             ->handleRequest();
 

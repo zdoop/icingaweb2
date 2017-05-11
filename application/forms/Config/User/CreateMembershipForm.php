@@ -6,6 +6,7 @@ namespace Icinga\Forms\Config\User;
 use Exception;
 use Icinga\Application\Logger;
 use Icinga\Data\DataArray\ArrayDatasource;
+use Icinga\User;
 use Icinga\Web\Form;
 use Icinga\Web\Notification;
 
@@ -24,11 +25,11 @@ class CreateMembershipForm extends Form
     protected $backends;
 
     /**
-     * The username to create memberships for
+     * The user to create memberships for
      *
-     * @var string
+     * @var User
      */
-    protected $userName;
+    protected $user;
 
     /**
      * Set the user group backends to fetch groups from
@@ -44,15 +45,15 @@ class CreateMembershipForm extends Form
     }
 
     /**
-     * Set the username to create memberships for
+     * Set {@link user}
      *
-     * @param   string  $userName
+     * @param   User $user
      *
      * @return  $this
      */
-    public function setUsername($userName)
+    public function setUser($user)
     {
-        $this->userName = $userName;
+        $this->user = $user;
         return $this;
     }
 
@@ -79,13 +80,13 @@ class CreateMembershipForm extends Form
                 'label'         => $this->translate('Groups'),
                 'description'   => sprintf(
                     $this->translate('Select one or more groups where to add %s as member'),
-                    $this->userName
+                    $this->user->getUsername()
                 ),
                 'class'         => 'grant-permissions'
             )
         );
 
-        $this->setTitle(sprintf($this->translate('Create memberships for %s'), $this->userName));
+        $this->setTitle(sprintf($this->translate('Create memberships for %s'), $this->user->getUsername()));
         $this->setSubmitLabel($this->translate('Create'));
     }
 
@@ -95,7 +96,10 @@ class CreateMembershipForm extends Form
     public function onRequest()
     {
         if ($this->createDataSource()->select()->from('group')->count() === 0) {
-            Notification::info(sprintf($this->translate('User %s is already a member of all groups'), $this->userName));
+            Notification::info(sprintf(
+                $this->translate('User %s is already a member of all groups'),
+                $this->user->getUsername()
+            ));
             $this->getResponse()->redirectAndExit($this->getRedirectUrl());
         }
     }
@@ -120,13 +124,13 @@ class CreateMembershipForm extends Form
                     'group_membership',
                     array(
                         'group_name'    => $groupName,
-                        'user_name'     => $this->userName
+                        'user_name'     => $this->user->getLocalpart()
                     )
                 );
             } catch (Exception $e) {
                 Notification::error(sprintf(
                     $this->translate('Failed to add "%s" as group member for "%s"'),
-                    $this->userName,
+                    $this->user->getUsername(),
                     $groupName
                 ));
                 $this->error($e->getMessage());
@@ -160,7 +164,7 @@ class CreateMembershipForm extends Form
                 $memberships = $backend
                     ->select()
                     ->from('group_membership', array('group_name'))
-                    ->where('user_name', $this->userName)
+                    ->where('user_name', $this->user->getLocalpart())
                     ->fetchColumn();
                 foreach ($backend->select(array('group_name')) as $row) {
                     if (! in_array($row->group_name, $memberships)) { // TODO(jom): Apply this as native query filter

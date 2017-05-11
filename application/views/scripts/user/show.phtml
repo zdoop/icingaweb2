@@ -1,15 +1,21 @@
 <?php
 
+use Icinga\Authentication\User\UserBackend;
 use Icinga\Data\Updatable;
 use Icinga\Data\Reducible;
 use Icinga\Data\Selectable;
 
 ?>
 <div class="controls separated">
-<?php if (! $this->compact): ?>
-    <?= $tabs; ?>
-<?php endif ?>
-    <h2><?= $this->escape($user->user_name) ?></h2>
+<?php
+if (! $this->compact) {
+    echo $tabs;
+}
+
+/** @var \Icinga\Authentication\User\UserBackendInterface $backend */
+$userName = UserBackend::getUserFromBackend($user->user_name, $backend)->getUsername();
+?>
+    <h2><?= $this->escape($userName) ?></h2>
     <?php
     if ($this->hasPermission('config/authentication/users/edit') && $backend instanceof Updatable) {
         echo $this->qlink(
@@ -22,7 +28,7 @@ use Icinga\Data\Selectable;
             array(
                 'class' => 'button-link',
                 'icon'  => 'edit',
-                'title' => sprintf($this->translate('Edit user %s'), $user->user_name)
+                'title' => sprintf($this->translate('Edit user %s'), $userName)
             )
         );
     }

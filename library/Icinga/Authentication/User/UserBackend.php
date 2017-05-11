@@ -243,23 +243,44 @@ class UserBackend implements ConfigAwareFactory
      */
     public static function isBackendResponsibleForUser(UserBackendInterface $backend, User $user)
     {
-        $backendDomains = Config::app('authentication')->get($backend->getName(), 'domains');
+        $backendDomain = static::getBackendDomain($backend);
         $userDomain = $user->getDomain();
 
         if ($userDomain === null) {
             // The user logs in as "jdoe", not as "jdoe@example.com" and there's no default domain.
-            // The backend is only responsible if its domains are also missing.
-            return $backendDomains === null;
+            // The backend is only responsible if its domain is also missing.
+            return $backendDomain === null;
         } else {
             // The user logs in as "jdoe@example.com" or "jdoe" with a default domain being configured.
-            $userDomain = strtolower($userDomain);
-            if ($backendDomains === null) {
-                // The backend's domains are missing and we fall back to the default domain (if any).
-                $defaultDomain = Config::app()->get('authentication', 'default_domain');
-                return $defaultDomain !== null && $userDomain === strtolower($defaultDomain);
-            } else {
-                return in_array($userDomain, explode(',', strtolower($backendDomains)));
-            }
+            return strtolower($userDomain) === strtolower($backendDomain);
         }
+    }
+
+    /**
+     * Get the domain the given backend is responsible for (fall back to the default domain if any)
+     *
+     * @param   UserBackendInterface    $backend
+     *
+     * @return  string|null
+     */
+    public static function getBackendDomain(UserBackendInterface $backend)
+    {
+        $backendDomain = Config::app('authentication')->get($backend->getName(), 'domain');
+        return $backendDomain === null ? Config::app()->get('authentication', 'default_domain') : $backendDomain;
+    }
+
+    /**
+     * Get the user with the given name's localpart from the given backend as fully assembled {@link User} object
+     *
+     * @param   string                  $userLocalpart
+     * @param   UserBackendInterface    $backend
+     *
+     * @return  User
+     */
+    public static function getUserFromBackend($userLocalpart, UserBackendInterface $backend)
+    {
+        $user = new User($userLocalpart);
+        $user->setDomain(static::getBackendDomain($backend));
+        return $user->setDefaultDomainIfNeeded();
     }
 }

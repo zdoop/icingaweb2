@@ -3,6 +3,8 @@
 
 namespace Icinga\Forms\Config\User;
 
+use Icinga\Authentication\User\UserBackend;
+use Icinga\Authentication\User\UserBackendInterface;
 use Icinga\Data\Filter\Filter;
 use Icinga\Forms\RepositoryForm;
 
@@ -30,7 +32,12 @@ class UserForm extends RepositoryForm
             'user_name',
             array(
                 'required'  => true,
-                'label'     => $this->translate('Username')
+                'label'     => (
+                    $this->repository instanceof UserBackendInterface
+                        && UserBackend::getBackendDomain($this->repository) !== null
+                )
+                    ? $this->translate('Username (without any domain)')
+                    : $this->translate('Username')
             )
         );
         $this->addElement(
